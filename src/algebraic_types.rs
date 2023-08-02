@@ -1,5 +1,33 @@
 use std::ops::{AddAssign, MulAssign, Add, Mul};
 
+pub trait FieldTraits {
+  fn zero() -> Self;
+  fn mul_ntimes(self, n: u8) -> Self;
+}
+
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub struct Polynomial {
+  bits: u64
+}
+
+impl Polynomial {
+  // TODO: d+ 2 choose 2
+  pub fn evaluate<const N: usize>(self, x: FieldExtension<N>, y: FieldExtension<N>,z: FieldExtension<N>, lut: [Term; 21]) -> FieldExtension<N> {
+    let mut res = FieldExtension::zero();
+    for i in 0..21 {
+      if (self.bits >> i) & 1 == 1 {
+        res += lut[i].evaluate(x, y, z);
+      }
+    }
+    res
+  }
+}
+
+
+
+
+
+
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Term { 
   pub x_deg: u8,
@@ -20,11 +48,12 @@ impl Term {
     Term { x_deg: 0, y_deg: 0, z_deg: 0, constant: 0 }
   }
 
-  pub fn evaluate<T: Mul>(self, x: T, y: T, z: T) {
-    let mut x_res = 1;
-    let mut x_res = 1;
-    let mut x_res = 1;
-    
+  pub fn evaluate<const N: usize>(self, x: FieldExtension<N>, y: FieldExtension<N>, z: FieldExtension<N>) -> FieldExtension<N> {
+    if self.constant == 0 {
+      FieldExtension::zero()
+    } else {
+      x.mul_ntimes(self.x_deg) * y.mul_ntimes(self.y_deg) * z.mul_ntimes(self.z_deg)
+    }
   }
   
   pub fn generate_derivatives(self) -> PartialDerivatives {
@@ -35,21 +64,21 @@ impl Term {
     if term_x.x_deg == 0 {
       term_x = Term::zero();
     } else {
-      term_x.constant = term_x.x_deg;
+      term_x.constant = (term_x.constant * term_x.x_deg) & 1;
       term_x.x_deg -= 1;
     }
 
     if term_y.y_deg == 0 {
       term_y = Term::zero();
     } else {
-      term_y.constant = term_y.y_deg;
+      term_y.constant = (term_y.constant * term_y.y_deg) & 1;
       term_y.y_deg -= 1;
     }
     
     if term_z.z_deg == 0 {
       term_z = Term::zero();
     } else {
-      term_z.constant = term_z.z_deg;
+      term_z.constant = (term_z.constant * term_z.z_deg) & 1;
       term_z.z_deg -= 1;
     }
     PartialDerivatives { term_x, term_y, term_z }
@@ -65,6 +94,20 @@ impl PartialDerivatives {
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct FieldExtension<const N: usize> {
   element: u64,
+}
+
+impl<const N: usize> FieldTraits for FieldExtension<N> {
+    fn zero() -> Self {
+      FieldExtension { element: 0}
+    }
+
+    fn mul_ntimes(self, n: u8) -> FieldExtension<N> {
+      let mut res = FieldExtension { element: 1 };
+      for _ in 0..n {
+        res *= self;
+      }
+      res
+    }
 }
 
 impl<const N: usize> FieldExtension<N> {
@@ -84,6 +127,8 @@ impl<const N: usize> FieldExtension<N> {
       println!("0");
     }
   }
+
+
 
   fn internal_mul(element: u64, rhs: u64) -> u64 {
     let bitmask: u64 = !((!0) << N);
