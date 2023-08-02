@@ -26,19 +26,28 @@ fn generate_terms() -> Vec<Term> {
 
 fn main() {
   let terms = generate_terms();
-  // println!("{:?}",terms[3].generate_derivatives());
+
+
+  let normal = Polynomial::generate_default_lut();
+  let (part_x, part_y, part_z) = Polynomial::generate_derative_luts(&normal);
+
+  let mut smooth: usize = 0;
   for n in 0..(1<<(DPLUS2_CHOOSE_2)) {
-    // let polynomial: Polynomial = Polynomial::new();
+    let polynomial: Polynomial = Polynomial::new(n);
+    if polynomial.has_singularity::<1>(&normal, &part_x, &part_y, &part_z) {polynomial.print(); continue;}
+    if polynomial.has_singularity::<2>(&normal, &part_x, &part_y, &part_z) {continue;}
+    if polynomial.has_singularity::<3>(&normal, &part_x, &part_y, &part_z) {continue;}
+    if polynomial.has_singularity::<4>(&normal, &part_x, &part_y, &part_z) {continue;}
+    if polynomial.has_singularity::<5>(&normal, &part_x, &part_y, &part_z) {continue;}
+    if polynomial.has_singularity::<6>(&normal, &part_x, &part_y, &part_z) {continue;}
+    if polynomial.has_singularity::<7>(&normal, &part_x, &part_y, &part_z) {continue;}
+    if polynomial.has_singularity::<8>(&normal, &part_x, &part_y, &part_z) {continue;}
+    if polynomial.has_singularity::<9>(&normal, &part_x, &part_y, &part_z) {continue;}
+    if polynomial.has_singularity::<10>(&normal, &part_x, &part_y, &part_z) {continue;}
 
-    // for N in 0..11 {
-    //   if polynomial.has_singularity(normal, part_x, part_y, part_z) {
-    //     break
-    //   }
-    // }
+    smooth += 1;
   }
 
+  println!("{smooth}");
 
-  for n in 0..(1<<3) {
-    FieldExtension::<3>::new(n).print();
-  }
 }

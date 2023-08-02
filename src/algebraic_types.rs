@@ -1,6 +1,7 @@
 use std::ops::{AddAssign, MulAssign, Add, Mul};
 
 use crate::DPLUS2_CHOOSE_2;
+use crate::DEGREE;
 
 pub trait FieldTraits {
   fn zero() -> Self;
@@ -70,7 +71,7 @@ impl Polynomial {
         .collect()
   }
 
-  pub fn generate_derative_luts(default_lut: Vec<Term>) -> (Vec<Term>, Vec<Term>, Vec<Term>) {
+  pub fn generate_derative_luts(default_lut: &Vec<Term>) -> (Vec<Term>, Vec<Term>, Vec<Term>) {
     let mut lut_x: Vec<Term> = vec![];
     let mut lut_y: Vec<Term> = vec![];
     let mut lut_z: Vec<Term> = vec![];
