@@ -34,7 +34,7 @@ fn main() {
   let mut smooth: usize = 0;
   for n in 0..(1<<(DPLUS2_CHOOSE_2)) {
     let polynomial: Polynomial = Polynomial::new(n);
-    if polynomial.has_singularity::<1>(&normal, &part_x, &part_y, &part_z) {polynomial.print(); continue;}
+    if polynomial.has_singularity::<1>(&normal, &part_x, &part_y, &part_z) {polynomial.print(&normal); continue;}
     if polynomial.has_singularity::<2>(&normal, &part_x, &part_y, &part_z) {continue;}
     if polynomial.has_singularity::<3>(&normal, &part_x, &part_y, &part_z) {continue;}
     if polynomial.has_singularity::<4>(&normal, &part_x, &part_y, &part_z) {continue;}
