@@ -1,5 +1,7 @@
 use std::ops::{AddAssign, MulAssign, Add, Mul};
 
+const DEGREE: usize = 5;
+
 pub trait FieldTraits {
   fn zero() -> Self;
   fn mul_ntimes(self, n: u8) -> Self;
@@ -11,8 +13,12 @@ pub struct Polynomial {
 }
 
 impl Polynomial {
+  pub fn new(bits: u64) -> Polynomial {
+    Polynomial { bits: bits }
+  }
+
   // TODO: d+ 2 choose 2
-  pub fn evaluate<const N: usize>(self, x: FieldExtension<N>, y: FieldExtension<N>,z: FieldExtension<N>, lut: [Term; 21]) -> FieldExtension<N> {
+  pub fn evaluate<const N: usize>(self, x: FieldExtension<N>, y: FieldExtension<N>,z: FieldExtension<N>, lut: Vec<Term>) -> FieldExtension<N> {
     let mut res = FieldExtension::zero();
     for i in 0..21 {
       if (self.bits >> i) & 1 == 1 {
@@ -20,6 +26,38 @@ impl Polynomial {
       }
     }
     res
+  }
+
+  pub fn generate_default_lut() -> Vec<Term> {
+    (0..=DEGREE as u8)
+        .flat_map(move |a| {
+            (0..=(DEGREE as u8) - a).map(move |b| {
+                let c = DEGREE as u8 - b - a;
+                println!("{},{},{}", a,b,c);
+                Term {
+                    x_deg: a,
+                    y_deg: b,
+                    z_deg: c,
+                    constant: 1,
+                }
+            })
+        })
+        .collect()
+  }
+
+  pub fn generate_derative_luts(default_lut: Vec<Term>) -> (Vec<Term>, Vec<Term>, Vec<Term>) {
+    let mut lut_x: Vec<Term> = vec![];
+    let mut lut_y: Vec<Term> = vec![];
+    let mut lut_z: Vec<Term> = vec![];
+
+    for term in default_lut {
+      let (x,y,z) = term.generate_derivatives();
+      lut_x.push(x);
+      lut_y.push(y);
+      lut_z.push(z);
+    }
+
+    (lut_x, lut_y, lut_z)
   }
 }
 
