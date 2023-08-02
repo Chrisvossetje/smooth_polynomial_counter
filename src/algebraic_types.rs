@@ -36,12 +36,6 @@ pub struct Term {
   pub constant: u8,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq)]
-pub struct PartialDerivatives {
-  pub term_x: Term,
-  pub term_y: Term,
-  pub term_z: Term,
-}
 
 impl Term {
   pub fn zero() -> Term {
@@ -56,7 +50,7 @@ impl Term {
     }
   }
   
-  pub fn generate_derivatives(self) -> PartialDerivatives {
+  pub fn generate_derivatives(self) -> (Term, Term, Term) {
     let mut term_x = self;
     let mut term_y = self;
     let mut term_z = self;
@@ -81,12 +75,8 @@ impl Term {
       term_z.constant = (term_z.constant * term_z.z_deg) & 1;
       term_z.z_deg -= 1;
     }
-    PartialDerivatives { term_x, term_y, term_z }
+    (term_x, term_y, term_z)
   }
-}
-
-impl PartialDerivatives {
-  
 }
 
 
@@ -127,8 +117,6 @@ impl<const N: usize> FieldExtension<N> {
       println!("0");
     }
   }
-
-
 
   fn internal_mul(element: u64, rhs: u64) -> u64 {
     let bitmask: u64 = !((!0) << N);
