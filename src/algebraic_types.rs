@@ -70,7 +70,6 @@ impl Polynomial {
         .flat_map(move |a| {
             (0..=(DEGREE as u8) - a).map(move |b| {
                 let c = DEGREE as u8 - b - a;
-                println!("{},{},{}", a,b,c);
                 Term {
                     x_deg: a,
                     y_deg: b,
