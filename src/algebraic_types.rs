@@ -1,5 +1,7 @@
 use std::ops::{AddAssign, MulAssign, Add, Mul};
 
+use crate::DPLUS2_CHOOSE_2;
+
 pub trait FieldTraits {
   fn zero() -> Self;
   fn mul_ntimes(self, n: u8) -> Self;
@@ -12,14 +14,39 @@ pub struct Polynomial {
 
 impl Polynomial {
   // TODO: d+ 2 choose 2
-  pub fn evaluate<const N: usize>(self, x: FieldExtension<N>, y: FieldExtension<N>,z: FieldExtension<N>, lut: [Term; 21]) -> FieldExtension<N> {
+  pub fn evaluate<const N: usize>(self, x: FieldExtension<N>, y: FieldExtension<N>,z: FieldExtension<N>, lut: &Vec<Term>) -> FieldExtension<N> {
     let mut res = FieldExtension::zero();
-    for i in 0..21 {
+    for i in 0..DPLUS2_CHOOSE_2 {
       if (self.bits >> i) & 1 == 1 {
         res += lut[i].evaluate(x, y, z);
       }
     }
     res
+  }
+
+  pub fn has_singularity<const N: usize>(self, normal: &Vec<Term>, part_x:  &Vec<Term>,  part_y:  &Vec<Term>,  part_z:  &Vec<Term>) -> bool {
+    for x in 0..(1<<N) {
+      for y in 0..(1<<N) {
+        for z in 0..(1<<N) {
+          if x | y | z == 0 {
+            continue;
+          }
+          let p_x = FieldExtension::<N>::new(x);
+          let p_y = FieldExtension::<N>::new(y);
+          let p_z = FieldExtension::<N>::new(z);
+          if self.evaluate(p_x, p_y, p_z, normal).is_zero() {
+            if self.evaluate(p_x, p_y, p_z, part_x).is_zero() {
+              if self.evaluate(p_x, p_y, p_z, part_y).is_zero() {
+                if self.evaluate(p_x, p_y, p_z, part_z).is_zero() {
+                  return true
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    false
   }
 }
 
@@ -140,6 +167,14 @@ impl<const N: usize> FieldExtension<N> {
       sum_2 ^= 0b11;
     }
     (sum ^ sum_2) & bitmask
+  }
+
+  pub fn is_zero(&self) -> bool {
+    if self.element == 0 {
+      true
+    } else {
+      false
+    }
   }
 }
 

@@ -1,10 +1,11 @@
-use algebraic_types::PartialDerivatives;
+use algebraic_types::Polynomial;
 
 use crate::algebraic_types::{Term, FieldExtension};
 
 mod algebraic_types;
 
 const DEGREE: usize = 3;
+const DPLUS2_CHOOSE_2: usize = ((DEGREE+2) * (DEGREE+1)) / 2;
 
 fn generate_terms() -> Vec<Term> {
     (0..=DEGREE as u8)
@@ -26,14 +27,18 @@ fn generate_terms() -> Vec<Term> {
 fn main() {
   let terms = generate_terms();
   // println!("{:?}",terms[3].generate_derivatives());
-  
+  for n in 0..(1<<(DPLUS2_CHOOSE_2)) {
+    // let polynomial: Polynomial = Polynomial::new();
+
+    // for N in 0..11 {
+    //   if polynomial.has_singularity(normal, part_x, part_y, part_z) {
+    //     break
+    //   }
+    // }
+  }
 
 
-  let a = FieldExtension::<4>::new(0b111);
-  let b = FieldExtension::<4>::new(0b1010);
-  a.print();
-  b.print();
-  let c = (a*b);
-  c.print();
-
+  for n in 0..(1<<3) {
+    FieldExtension::<3>::new(n).print();
+  }
 }
