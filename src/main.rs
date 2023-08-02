@@ -25,12 +25,23 @@ fn generate_terms() -> Vec<Term> {
 
 fn main() {
   
-  let terms = generate_terms();
-  for term in terms {
-    println!("{} {} {}", term.x_deg, term.y_deg, term.z_deg)
-  }
+  let default_lut = Polynomial::generate_default_lut();
+  let (lut_x, lut_y, lut_z) = Polynomial::generate_derative_luts(&default_lut);
 
-  let f = Polynomial::new(0b1);
-  
+  // let terms = generate_terms();
+  // for term in terms {
+  //   println!("{} {} {}", term.x_deg, term.y_deg, term.z_deg)
+  // }
+
+  let f = Polynomial::new(0b100000011);
+  print!("   f: ");
+  f.print(&default_lut);
+
+  print!("dx f: ");
+  f.print(&lut_x);
+  print!("dy f: ");
+  f.print(&lut_y);
+  print!("dz f: ");
+  f.print(&lut_z);
 
 }

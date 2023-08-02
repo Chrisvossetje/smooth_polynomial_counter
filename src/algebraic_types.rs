@@ -17,6 +17,17 @@ impl Polynomial {
     Polynomial { bits: bits }
   }
 
+  pub fn print(self, lut: &Vec<Term>) {
+    for i in 0..21 {
+      if (self.bits >> i) & 1 == 1 {
+        if (lut[i].constant != 0) { 
+          print!("{} + ", lut[i].str())
+        }
+      }
+    }
+    println!()
+  }
+
   // TODO: d+ 2 choose 2
   pub fn evaluate<const N: usize>(self, x: FieldExtension<N>, y: FieldExtension<N>,z: FieldExtension<N>, lut: Vec<Term>) -> FieldExtension<N> {
     let mut res = FieldExtension::zero();
@@ -45,7 +56,7 @@ impl Polynomial {
         .collect()
   }
 
-  pub fn generate_derative_luts(default_lut: Vec<Term>) -> (Vec<Term>, Vec<Term>, Vec<Term>) {
+  pub fn generate_derative_luts(default_lut: &Vec<Term>) -> (Vec<Term>, Vec<Term>, Vec<Term>) {
     let mut lut_x: Vec<Term> = vec![];
     let mut lut_y: Vec<Term> = vec![];
     let mut lut_z: Vec<Term> = vec![];
@@ -86,6 +97,10 @@ impl Term {
     } else {
       x.mul_ntimes(self.x_deg) * y.mul_ntimes(self.y_deg) * z.mul_ntimes(self.z_deg)
     }
+  }
+
+  pub fn str(self) -> String {
+    format!("X^{} Y^{} Z^{}", self.x_deg, self.y_deg, self.z_deg)
   }
   
   pub fn generate_derivatives(self) -> (Term, Term, Term) {
