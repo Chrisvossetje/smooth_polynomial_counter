@@ -1,10 +1,10 @@
 use algebraic_types::PartialDerivatives;
 
-use crate::algebraic_types::Term;
+use crate::algebraic_types::{Term, FieldExtension};
 
 mod algebraic_types;
 
-const DEGREE: usize = 2;
+const DEGREE: usize = 3;
 
 fn generate_terms() -> Vec<Term> {
     (0..=DEGREE as u8)
@@ -25,8 +25,15 @@ fn generate_terms() -> Vec<Term> {
 
 fn main() {
   let terms = generate_terms();
-  println!("{:?}",terms[3].generate_derivatives());
+  // println!("{:?}",terms[3].generate_derivatives());
+  
 
-    
+
+  let a = FieldExtension::<4>::new(0b111);
+  let b = FieldExtension::<4>::new(0b1010);
+  a.print();
+  b.print();
+  let c = (a*b);
+  c.print();
 
 }
