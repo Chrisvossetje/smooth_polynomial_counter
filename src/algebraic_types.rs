@@ -1,7 +1,64 @@
 use std::ops::{AddAssign, MulAssign, Add, Mul};
+use std::vec;
 
 use crate::DPLUS2_CHOOSE_2;
 use crate::DEGREE;
+
+
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub struct IsoPolynomial {
+  pub representative: Polynomial,
+  pub size: u32,
+}
+
+
+impl IsoPolynomial {
+  pub fn deconstruct(self) -> (Polynomial, u32) {
+    (self.representative, self.size)
+  }
+}
+
+
+pub fn generate_iso_polynomials(lut: &Vec<Term>) -> Vec<IsoPolynomial>{
+  let mut things = vec![true; 1<<(DPLUS2_CHOOSE_2)];
+
+  let iso_luts = s6_lut(&lut);
+
+  let mut iso_polys = Vec::new();
+
+  for i in 1..1<<(DPLUS2_CHOOSE_2) {
+    if things[i] {
+      let mut count = 1;
+      let poly = Polynomial::new(i as u32);
+      let mut poly_elements = vec![poly];
+      for iso_lut in &iso_luts {
+        let perm_poly = poly.give_permutation(&iso_lut);
+        if !poly_elements.contains(&perm_poly) {
+          count += 1;
+          poly_elements.push(perm_poly);
+        }
+        things[perm_poly.bits as usize] = false;
+      }
+      iso_polys.push(IsoPolynomial { representative: poly, size: count});
+    }
+  }
+  iso_polys
+}
+
+pub fn s6_lut(lut: &Vec<Term>) -> Vec<Vec<usize>> {
+  let mut super_luts: Vec<Vec<usize>> = vec![Vec::new(); 6];
+  for t in lut {
+    let isos = t.generate_isomorphisms();
+    for (super_index, a) in isos.iter().enumerate() {
+      for (inside_index, b) in lut.iter().enumerate() {
+        if *a == *b {
+          super_luts[super_index].push(inside_index);
+        }
+      }
+    }
+  }
+  super_luts
+}
 
 pub trait FieldTraits {
   fn zero() -> Self;
@@ -10,18 +67,18 @@ pub trait FieldTraits {
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Polynomial {
-  bits: u64
+  bits: u32
 }
 
 impl Polynomial {
-  pub fn new(bits: u64) -> Polynomial {
+  pub fn new(bits: u32) -> Polynomial {
     Polynomial { bits: bits }
   }
 
   pub fn print(self, lut: &Vec<Term>) {
-    for i in 0..21 {
+    for i in 0..DPLUS2_CHOOSE_2 {
       if (self.bits >> i) & 1 == 1 {
-        if (lut[i].constant != 0) { 
+        if lut[i].constant != 0 { 
           print!("{} + ", lut[i].str())
         }
       }
@@ -43,7 +100,7 @@ impl Polynomial {
   pub fn has_singularity<const N: usize>(self, normal: &Vec<Term>, part_x:  &Vec<Term>,  part_y:  &Vec<Term>,  part_z:  &Vec<Term>) -> bool {
     for x in 0..(1<<N) {
       for y in 0..(1<<N) {
-        for z in 0..(1<<N) {
+        for z in 0..2 {
           if x | y | z == 0 {
             continue;
           }
@@ -79,6 +136,16 @@ impl Polynomial {
             })
         })
         .collect()
+  }
+
+  pub fn give_permutation(self, lut: &Vec<usize>) -> Polynomial {
+    let mut result: u32 = 0;
+    for i in 0..DPLUS2_CHOOSE_2 {
+      if (self.bits >> i) & 1 == 1 {
+        result |= 1 << lut[i]; 
+      }
+    }
+    Polynomial { bits: result }
   }
 
   pub fn generate_derative_luts(default_lut: &Vec<Term>) -> (Vec<Term>, Vec<Term>, Vec<Term>) {
@@ -126,6 +193,16 @@ impl Term {
 
   pub fn str(self) -> String {
     format!("X^{} Y^{} Z^{}", self.x_deg, self.y_deg, self.z_deg)
+  }
+
+  pub fn generate_isomorphisms(&self) -> [Term; 6] {
+    let id = *self;
+    let s_13 = Term{ x_deg: self.z_deg, y_deg: self.y_deg, z_deg: self.x_deg, constant: self.constant };
+    let s_23 = Term{ x_deg: self.x_deg, y_deg: self.z_deg, z_deg: self.y_deg, constant: self.constant };
+    let s_12 = Term{ x_deg: self.y_deg, y_deg: self.x_deg, z_deg: self.z_deg, constant: self.constant };
+    let s_123 = Term{ x_deg: self.y_deg, y_deg: self.z_deg, z_deg: self.x_deg, constant: self.constant };
+    let s_132 = Term{ x_deg: self.z_deg, y_deg: self.x_deg, z_deg: self.y_deg, constant: self.constant };
+    [id,s_13,s_23,s_12,s_123,s_132]
   }
   
   pub fn generate_derivatives(self) -> (Term, Term, Term) {
