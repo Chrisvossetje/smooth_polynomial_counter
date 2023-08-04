@@ -9,7 +9,7 @@ mod algebraic_types;
 const DEGREE: usize = 5;
 const DPLUS2_CHOOSE_2: usize = ((DEGREE+2) * (DEGREE+1)) / 2;
 
-const MAX_FIELD_EXT: usize = 6;
+const MAX_FIELD_EXT: usize = 10;
 
 const NUM_THREADS: usize = 16;
 
