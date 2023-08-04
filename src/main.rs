@@ -2,13 +2,14 @@ use std::time::Instant;
 
 use algebraic_types::Polynomial;
 
-use crate::algebraic_types::{Term, FieldExtension, s6_lut, generate_iso_polynomials};
+use crate::algebraic_types::{Term, FieldExtension, generate_iso_polynomials};
 
 mod algebraic_types;
 
 const DEGREE: usize = 4;
 const DPLUS2_CHOOSE_2: usize = ((DEGREE+2) * (DEGREE+1)) / 2;
 
+const MAX_FIELD_EXT: usize = 4;
 
 
 
@@ -18,30 +19,28 @@ fn main() {
   let normal = Polynomial::generate_default_lut();
   let (part_x, part_y, part_z) = Polynomial::generate_derative_luts(&normal);
 
+  // Each term now has for each degree for each term for each points calculated its fieldextension.
+  let mut normal_results = Vec::new();
+  let mut part_x_results = Vec::new();
+  let mut part_y_results = Vec::new();
+  let mut part_z_results = Vec::new();
+  
+  for n in 1..=MAX_FIELD_EXT as u32 {
+    normal_results.push(Term::generate_points_for_multiple(&normal, n));
+    part_x_results.push(Term::generate_points_for_multiple(&part_x, n));
+    part_y_results.push(Term::generate_points_for_multiple(&part_y, n));
+    part_z_results.push(Term::generate_points_for_multiple(&part_z, n));
+  }
+
   let iso_polys = generate_iso_polynomials(&normal);
   // println!("{:?}", iso_polys);
   
-
-
   let mut smooth: usize = 0;
-  for iso_poly in iso_polys {
+  'outer: for iso_poly in iso_polys { 
     let (poly, size) = iso_poly.deconstruct();
-    if poly.has_singularity::<1>(&normal, &part_x, &part_y, &part_z) {continue;}        // 823543
-    if poly.has_singularity::<2>(&normal, &part_x, &part_y, &part_z) {continue;}        // 724136
-    if poly.has_singularity::<3>(&normal, &part_x, &part_y, &part_z) {continue;}        // 712880
-    if poly.has_singularity::<4>(&normal, &part_x, &part_y, &part_z) {continue;}        // 693056
-    if poly.has_singularity::<5>(&normal, &part_x, &part_y, &part_z) {continue;}
-    if poly.has_singularity::<6>(&normal, &part_x, &part_y, &part_z) {continue;}
-    // if poly.has_singularity::<7>(&normal, &part_x, &part_y, &part_z) {continue;}
-    // println!("7");
-    // if poly.has_singularity::<8>(&normal, &part_x, &part_y, &part_z) {continue;}
-    // println!("8");
-    // if poly.has_singularity::<9>(&normal, &part_x, &part_y, &part_z) {continue;}
-    // println!("9");
-    // if poly.has_singularity::<10>(&normal, &part_x, &part_y, &part_z) {continue;}
-    // println!("10");
-
-    // polynomial.print(&normal);
+    for n in 1..=MAX_FIELD_EXT as usize {
+      if poly.has_singularity(&normal_results[n-1], &part_x_results[n-1], &part_y_results[n-1], &part_z_results[n-1], n as u32) {continue 'outer;}        // 823543
+    }
     smooth += size as usize;
   }
 

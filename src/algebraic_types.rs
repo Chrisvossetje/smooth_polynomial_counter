@@ -1,9 +1,14 @@
 use std::ops::{AddAssign, MulAssign, Add, Mul};
 use std::vec;
+use std::arch;
 
 use crate::DPLUS2_CHOOSE_2;
 use crate::DEGREE;
 
+
+pub fn generate_single_number(x: u64,y: u64,z: u64, N: u32) -> u32 {
+  ((x << (N+1))+ (y << 1) + z) as u32
+}
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct IsoPolynomial {
@@ -22,7 +27,7 @@ impl IsoPolynomial {
 pub fn generate_iso_polynomials(lut: &Vec<Term>) -> Vec<IsoPolynomial>{
   let mut things = vec![true; 1<<(DPLUS2_CHOOSE_2)];
 
-  let iso_luts = s6_lut(&lut);
+  let iso_luts = s3_lut(&lut);
 
   let mut iso_polys = Vec::new();
 
@@ -45,7 +50,7 @@ pub fn generate_iso_polynomials(lut: &Vec<Term>) -> Vec<IsoPolynomial>{
   iso_polys
 }
 
-pub fn s6_lut(lut: &Vec<Term>) -> Vec<Vec<usize>> {
+pub fn s3_lut(lut: &Vec<Term>) -> Vec<Vec<usize>> {
   let mut super_luts: Vec<Vec<usize>> = vec![Vec::new(); 6];
   for t in lut {
     let isos = t.generate_isomorphisms();
@@ -61,7 +66,7 @@ pub fn s6_lut(lut: &Vec<Term>) -> Vec<Vec<usize>> {
 }
 
 pub trait FieldTraits {
-  fn zero() -> Self;
+  fn zero(n: u32) -> Self;
   fn mul_ntimes(self, n: u8) -> Self;
 }
 
@@ -87,30 +92,28 @@ impl Polynomial {
   }
 
   // TODO: d+ 2 choose 2
-  pub fn evaluate<const N: usize>(self, x: FieldExtension<N>, y: FieldExtension<N>,z: FieldExtension<N>, lut: &Vec<Term>) -> FieldExtension<N> {
-    let mut res = FieldExtension::zero();
+  pub fn evaluate(self, index: u32, lut: &Vec<Vec<FieldExtension>>, n:u32) -> FieldExtension {
+    let mut res = FieldExtension::zero(n);
     for i in 0..DPLUS2_CHOOSE_2 {
       if (self.bits >> i) & 1 == 1 {
-        res += lut[i].evaluate(x, y, z);
+        res += lut[i][index as usize];
       }
     }
     res
   }
 
-  pub fn has_singularity<const N: usize>(self, normal: &Vec<Term>, part_x:  &Vec<Term>,  part_y:  &Vec<Term>,  part_z:  &Vec<Term>) -> bool {
+  pub fn has_singularity(self, normal: &Vec<Vec<FieldExtension>>, part_x:  &Vec<Vec<FieldExtension>>,  part_y:  &Vec<Vec<FieldExtension>>,  part_z:  &Vec<Vec<FieldExtension>>, N: u32) -> bool {
     for x in 0..(1<<N) {
       for y in 0..(1<<N) {
         for z in 0..2 {
           if x | y | z == 0 {
             continue;
           }
-          let p_x = FieldExtension::<N>::new(x);
-          let p_y = FieldExtension::<N>::new(y);
-          let p_z = FieldExtension::<N>::new(z);
-          if self.evaluate(p_x, p_y, p_z, normal).is_zero() {
-            if self.evaluate(p_x, p_y, p_z, part_x).is_zero() {
-              if self.evaluate(p_x, p_y, p_z, part_y).is_zero() {
-                if self.evaluate(p_x, p_y, p_z, part_z).is_zero() {
+          let index = generate_single_number(x, y, z, N);
+          if self.evaluate(index, normal, N).is_zero() {
+            if self.evaluate(index, part_x, N).is_zero() {
+              if self.evaluate(index, part_y, N).is_zero() {
+                if self.evaluate(index, part_z, N).is_zero() {
                   return true
                 }
               }
@@ -183,9 +186,9 @@ impl Term {
     Term { x_deg: 0, y_deg: 0, z_deg: 0, constant: 0 }
   }
 
-  pub fn evaluate<const N: usize>(self, x: FieldExtension<N>, y: FieldExtension<N>, z: FieldExtension<N>) -> FieldExtension<N> {
+  pub fn evaluate(self, x: FieldExtension, y: FieldExtension, z: FieldExtension) -> FieldExtension {
     if self.constant == 0 {
-      FieldExtension::zero()
+      FieldExtension::zero(x.degree)
     } else {
       x.mul_ntimes(self.x_deg) * y.mul_ntimes(self.y_deg) * z.mul_ntimes(self.z_deg)
     }
@@ -232,22 +235,47 @@ impl Term {
     }
     (term_x, term_y, term_z)
   }
+
+  pub fn generate_precalculated_points(self, degree: u32) -> Vec<FieldExtension> {
+    let mut results = Vec::new();
+    for x in 0..(1<<degree) {
+      for y in 0..(1<<degree) {
+        for z in 0..2 {
+          let p_x = FieldExtension::new(x, degree);
+          let p_y = FieldExtension::new(y, degree);
+          let p_z = FieldExtension::new(z, degree);
+          let result = self.evaluate(p_x, p_y, p_z);
+          results.push(result);
+        }
+      }
+    }
+    results
+  }
+
+  pub fn generate_points_for_multiple(terms: &Vec<Term>, N: u32) -> Vec<Vec<FieldExtension>> {
+    let mut resultant_terms = Vec::new();
+    for t in terms {
+      resultant_terms.push(t.generate_precalculated_points(N));
+    }
+    resultant_terms
+  }
 }
 
 
 
 #[derive(Debug, Copy, Clone, PartialEq)]
-pub struct FieldExtension<const N: usize> {
-  element: u64,
+pub struct FieldExtension {
+  element: u32,
+  degree: u32,
 }
 
-impl<const N: usize> FieldTraits for FieldExtension<N> {
-    fn zero() -> Self {
-      FieldExtension { element: 0}
+impl FieldTraits for FieldExtension {
+    fn zero(degree: u32) -> Self {
+      FieldExtension { element: 0, degree}
     }
 
-    fn mul_ntimes(self, n: u8) -> FieldExtension<N> {
-      let mut res = FieldExtension { element: 1 };
+    fn mul_ntimes(self, n: u8) -> FieldExtension {
+      let mut res = FieldExtension { element: 1 ,degree: self.degree };
       for _ in 0..n {
         res *= self;
       }
@@ -255,13 +283,13 @@ impl<const N: usize> FieldTraits for FieldExtension<N> {
     }
 }
 
-impl<const N: usize> FieldExtension<N> {
-  pub fn new(element: u64) -> FieldExtension<N> {
-    FieldExtension { element: element}
+impl FieldExtension {
+  pub fn new(element: u32, degree: u32) -> FieldExtension {
+    FieldExtension {element, degree}
   }
 
   pub fn print(&self) {
-    for n in (1..N).rev() {
+    for n in (1..self.degree).rev() {
       if (self.element >> n) & 1 == 1{
         print!("x^{} + ", n);
       }
@@ -273,7 +301,7 @@ impl<const N: usize> FieldExtension<N> {
     }
   }
 
-  fn internal_mul(element: u64, rhs: u64) -> u64 {
+  fn internal_mul(element: u64, rhs: u64, N: u32) -> u32 {
     let bitmask: u64 = !((!0) << N);
 
     // let mult = self.element * rhs.element;
@@ -294,7 +322,7 @@ impl<const N: usize> FieldExtension<N> {
     if (sum_2 >> N) & 1 == 1 {
       sum_2 ^= 0b11;
     }
-    (sum ^ sum_2) & bitmask
+    ((sum ^ sum_2) & bitmask) as u32
   }
 
   pub fn is_zero(&self) -> bool {
@@ -306,30 +334,30 @@ impl<const N: usize> FieldExtension<N> {
   }
 }
 
-impl<const N: usize> Add for FieldExtension<N> {
+impl Add for FieldExtension {
   type Output = Self;
   
   fn add(self, rhs: Self) -> Self::Output {
-    FieldExtension {element: self.element ^ rhs.element }
+    FieldExtension {element: self.element ^ rhs.element, degree: self.degree}
   }
 }
 
-impl<const N: usize> Mul for FieldExtension<N> {
+impl Mul for FieldExtension {
   type Output = Self;
 
   fn mul(self, rhs: Self) -> Self::Output {
-    FieldExtension {element: FieldExtension::<N>::internal_mul(self.element, rhs.element)}
+    FieldExtension {element: FieldExtension::internal_mul(self.element as u64, rhs.element as u64, self.degree), degree: self.degree}
   }
 }
 
-impl<const N: usize> AddAssign for FieldExtension<N> {
+impl AddAssign for FieldExtension {
   fn add_assign(&mut self, rhs: Self) {
     self.element = self.element ^ rhs.element;
   }
 }
 
-impl<const N: usize> MulAssign for FieldExtension<N> {
+impl MulAssign for FieldExtension {
   fn mul_assign(&mut self, rhs: Self) {
-    self.element = FieldExtension::<N>::internal_mul(self.element, rhs.element);
+    self.element = FieldExtension::internal_mul(self.element as u64, rhs.element as u64, self.degree);
   }
 }
