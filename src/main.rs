@@ -9,9 +9,11 @@ mod algebraic_types;
 const DEGREE: usize = 5;
 const DPLUS2_CHOOSE_2: usize = ((DEGREE+2) * (DEGREE+1)) / 2;
 
-const MAX_FIELD_EXT: usize = 7;
+const MAX_FIELD_EXT: usize = 6;
 
 const NUM_THREADS: usize = 16;
+
+const SECOND_HALF: bool = false;
 
 fn main() {
   let now = Instant::now();
@@ -43,7 +45,11 @@ fn main() {
   
   println!("Start counting!");
 
-  let chunk_size = (iso_polys.len() + NUM_THREADS - 1) / NUM_THREADS;
+
+  let chunk_size = (iso_polys.len() + NUM_THREADS - 1) / (NUM_THREADS*2);
+  let half = chunk_size * NUM_THREADS;
+
+  
 
   let arc_iso_polys = Arc::new(iso_polys);
 
@@ -62,8 +68,11 @@ fn main() {
 
     let local_iso_polys = arc_iso_polys.clone();
 
-    let start_index = i*chunk_size;
+    let mut start_index = i*chunk_size;
 
+    if SECOND_HALF {
+      start_index += half;
+    }
 
     // Spawn a new thread
     thread::spawn(move || {
@@ -92,10 +101,11 @@ fn main() {
 // 4: 693056
 // 5: 693056
 // 6: 690648
-// 7:
-// 8:
+// 7: 690648
+// 8: 690648
 // 9:
 // 10:
+
 fn is_smooth(iso_polys: &Vec<IsoPolynomial>, start: usize, len: usize, normal_results: &Vec<Vec<Vec<FieldExtension>>>, part_x_results: &Vec<Vec<Vec<FieldExtension>>>, part_y_results: &Vec<Vec<Vec<FieldExtension>>>, part_z_results: &Vec<Vec<Vec<FieldExtension>>>) -> usize {
   let mut count = 0;
   'outer: for i in start..(start+len) {
