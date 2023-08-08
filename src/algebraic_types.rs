@@ -21,6 +21,15 @@ impl IsoPolynomial {
   }
 }
 
+pub fn generate_lut_degrees(order: u8, degree: u32) -> Vec<FieldExtension> {
+  let mut results = Vec::new();
+  for x in 0..(1<<degree) {
+    let p_x = FieldExtension::new(x, degree);
+    let result = p_x.mul_ntimes(order);
+    results.push(result);
+  }
+  results
+}
 
 pub fn generate_iso_polynomials(lut: &Vec<Term>) -> Vec<IsoPolynomial>{
   let mut things = vec![true; 1<<(DPLUS2_CHOOSE_2)];
@@ -101,6 +110,16 @@ impl Polynomial {
     res
   }
 
+  pub fn evaluate_alt2(self, x: FieldExtension, y: FieldExtension, z: FieldExtension, orders: &Vec<Vec<FieldExtension>>, terms: &Vec<Term>) -> FieldExtension {
+    let mut res = FieldExtension::zero(x.degree);
+    for i in 0..DPLUS2_CHOOSE_2 {
+      if (self.bits >> i) & 1 == 1 {
+        res += terms[i].evaluate_alt(x, y, z, orders);
+      }
+    }
+    res
+  }
+
 
   pub fn evaluate_alt(self, x: FieldExtension, y: FieldExtension, z: FieldExtension, lut: &Vec<Term>) -> FieldExtension {
     let mut res = FieldExtension::zero(x.degree);
@@ -154,6 +173,31 @@ impl Polynomial {
               if self.evaluate(index, part_y, N).is_zero() {
                 if self.evaluate(index, part_z, N).is_zero() {
                   return true
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    false
+  }
+
+  pub fn has_singularity_alt2(self, terms: &Vec<Vec<FieldExtension>>, normal: &Vec<Term>, part_x:  &Vec<Term>,  part_y:  &Vec<Term>,  part_z:  &Vec<Term>, N: u32) -> bool {
+    for x in 0..(1<<N) {
+      for y in 0..(1<<N) {
+        for z in 0..2 {
+          if x | y | z == 0 {
+            continue;
+          }
+          let p_x = FieldExtension::new(x, N);
+          let p_y = FieldExtension::new(y, N);
+          let p_z = FieldExtension::new(z, N);
+          if self.evaluate_alt2(p_x, p_y, p_z, terms, normal).is_zero() {
+            if self.evaluate_alt2(p_x, p_y, p_z, terms, part_x).is_zero() {
+              if self.evaluate_alt2(p_x, p_y, p_z, terms, part_y).is_zero() {
+                if self.evaluate_alt2(p_x, p_y, p_z, terms, part_z).is_zero() {
+                  return true;
                 }
               }
             }
@@ -230,6 +274,14 @@ impl Term {
       FieldExtension::zero(x.degree)
     } else {
       x.mul_ntimes(self.x_deg) * y.mul_ntimes(self.y_deg) * z.mul_ntimes(self.z_deg)
+    }
+  }
+
+  pub fn evaluate_alt(self, x: FieldExtension, y: FieldExtension, z: FieldExtension, lut: &Vec<Vec<FieldExtension>>) -> FieldExtension {
+    if self.constant == 0 {
+      FieldExtension::zero(x.degree)
+    } else {
+      lut[self.x_deg as usize][x.element as usize] * lut[self.y_deg as usize][y.element as usize] * lut[self.z_deg as usize][z.element as usize] 
     }
   }
 
