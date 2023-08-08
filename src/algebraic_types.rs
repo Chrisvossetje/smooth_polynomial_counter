@@ -1,10 +1,8 @@
 use std::ops::{AddAssign, MulAssign, Add, Mul};
 use std::vec;
-use std::arch;
 
 use crate::DPLUS2_CHOOSE_2;
 use crate::DEGREE;
-
 
 pub fn generate_single_number(x: u64,y: u64,z: u64, N: u32) -> u32 {
   ((x << (N+1))+ (y << 1) + z) as u32
@@ -80,6 +78,7 @@ impl Polynomial {
     Polynomial { bits: bits }
   }
 
+  #[allow(dead_code)]
   pub fn print(self, lut: &Vec<Term>) {
     for i in 0..DPLUS2_CHOOSE_2 {
       if (self.bits >> i) & 1 == 1 {
@@ -288,6 +287,7 @@ impl FieldExtension {
     FieldExtension {element, degree}
   }
 
+  #[allow(dead_code)]
   pub fn print(&self) {
     for n in (1..self.degree).rev() {
       if (self.element >> n) & 1 == 1{
@@ -301,28 +301,35 @@ impl FieldExtension {
     }
   }
 
-  fn internal_mul(element: u64, rhs: u64, N: u32) -> u32 {
+  
+  fn internal_mul(lhs: u64, rhs: u64, N: u32) -> u32 {
+    const IRRED_PART: [u64; 11] = [0, 1, 0b11,0b11,0b11, 0b101, 0b11, 0b11, 0b11001, 0b11, 0b1001];
     let bitmask: u64 = !((!0) << N);
+    let value = IRRED_PART[N as usize];
 
-    // let mult = self.element * rhs.element;
-    let mut sum = 0;
+    // step 1: take clmul of the two numbers
+    // step 2: take the N most least significant bits of the result
+    // step 3: take remaining bits and clmul by the irreducible polynomial
+    // step 4: xor the two results together
+    // step 5: this might overflow we need to repeat the process
+    
+    let mut res = FieldExtension::clmul(lhs, rhs, N);
+    while (res >> N) > 0 {
+      let lsb = res & bitmask;
+      let msb = res >> N;
+      res = lsb ^ FieldExtension::clmul(msb, value, N);
+    }
+    res as u32 
+  }
+
+  fn clmul(lhs: u64, rhs: u64, N: u32) -> u64 {
+    let mut res = 0;
     for n in 0..N {
-      if (element >> n) & 1  == 1{
-        sum ^= rhs << n;
+      if (lhs >> n) & 1 == 1 {
+        res ^= rhs << n;
       }
     }
-
-    let mut sum_2 = 0;
-    for n in 0..N {
-      if (sum >> N + n) & 1  == 1 {
-        sum_2 ^= 0b11 << n;
-      }
-    }
-
-    if (sum_2 >> N) & 1 == 1 {
-      sum_2 ^= 0b11;
-    }
-    ((sum ^ sum_2) & bitmask) as u32
+    res
   }
 
   pub fn is_zero(&self) -> bool {

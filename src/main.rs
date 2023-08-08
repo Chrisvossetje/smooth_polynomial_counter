@@ -4,12 +4,13 @@ use algebraic_types::{Polynomial, IsoPolynomial};
 
 use crate::algebraic_types::{Term, FieldExtension, generate_iso_polynomials};
 
+#[allow(non_snake_case)]
 mod algebraic_types;
 
 const DEGREE: usize = 5;
 const DPLUS2_CHOOSE_2: usize = ((DEGREE+2) * (DEGREE+1)) / 2;
 
-const MAX_FIELD_EXT: usize = 10;
+const MAX_FIELD_EXT: usize = 6;
 
 const NUM_THREADS: usize = 16;
 
@@ -46,7 +47,7 @@ fn main() {
   println!("Start counting!");
 
 
-  let chunk_size = (iso_polys.len() + NUM_THREADS - 1) / (NUM_THREADS*2);
+  let chunk_size = (iso_polys.len() + NUM_THREADS - 1) / (NUM_THREADS);
   let half = chunk_size * NUM_THREADS;
 
   
@@ -84,12 +85,16 @@ fn main() {
 
   drop(tx);
 
-  let mut smooth = 0;
+  let mut smooth: [usize; MAX_FIELD_EXT] = [0; MAX_FIELD_EXT];
   for received in rx {
-    smooth += received;
+    for i in 0..MAX_FIELD_EXT {
+      smooth[i] += received[i];
+    }
   }
 
-  println!("{smooth}");
+  for i in 0..MAX_FIELD_EXT {
+    println!("{}: {}, {}", i+1, smooth[i], smooth[i] as f32 / 168 as f32);
+  }
 
   println!("{:?}", now.elapsed());
 }
@@ -106,16 +111,17 @@ fn main() {
 // 9:
 // 10:
 
-fn is_smooth(iso_polys: &Vec<IsoPolynomial>, start: usize, len: usize, normal_results: &Vec<Vec<Vec<FieldExtension>>>, part_x_results: &Vec<Vec<Vec<FieldExtension>>>, part_y_results: &Vec<Vec<Vec<FieldExtension>>>, part_z_results: &Vec<Vec<Vec<FieldExtension>>>) -> usize {
-  let mut count = 0;
+fn is_smooth(iso_polys: &Vec<IsoPolynomial>, start: usize, len: usize, normal_results: &Vec<Vec<Vec<FieldExtension>>>, part_x_results: &Vec<Vec<Vec<FieldExtension>>>, part_y_results: &Vec<Vec<Vec<FieldExtension>>>, part_z_results: &Vec<Vec<Vec<FieldExtension>>>) -> [usize; MAX_FIELD_EXT] {
+  let mut count: [usize; MAX_FIELD_EXT] = [0; MAX_FIELD_EXT];
+
   'outer: for i in start..(start+len) {
     if i >= iso_polys.len() {break;}
     let iso_poly = &iso_polys[i];
     let (poly, size) = iso_poly.deconstruct();
     for n in 1..=MAX_FIELD_EXT as usize {
       if poly.has_singularity(&normal_results[n-1], &part_x_results[n-1], &part_y_results[n-1], &part_z_results[n-1], n as u32) {continue 'outer;}        // 823543
+      count[n-1] += size as usize;
     }
-    count += size as usize;
   }
   count
 }
