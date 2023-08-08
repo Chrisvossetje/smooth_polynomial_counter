@@ -101,6 +101,46 @@ impl Polynomial {
     res
   }
 
+
+  pub fn evaluate_alt(self, x: FieldExtension, y: FieldExtension, z: FieldExtension, lut: &Vec<Term>) -> FieldExtension {
+    let mut res = FieldExtension::zero(x.degree);
+    for i in 0..DPLUS2_CHOOSE_2 {
+      if (self.bits >> i) & 1 == 1 {
+        res += lut[i].evaluate(x, y, z);
+      }
+    }
+    res
+  }
+
+
+
+
+  pub fn has_singularity_alt(self, normal: &Vec<Term>, part_x:  &Vec<Term>,  part_y:  &Vec<Term>,  part_z:  &Vec<Term>, N: u32) -> Option<(FieldExtension, FieldExtension, FieldExtension)> {
+    for x in 0..(1<<N) {
+      for y in 0..(1<<N) {
+        for z in 0..(1<<N) {
+          if x | y | z == 0 {
+            continue;
+          }
+          let p_x = FieldExtension::new(x, N);
+          let p_y = FieldExtension::new(y, N);
+          let p_z = FieldExtension::new(z, N);
+          if self.evaluate_alt(p_x, p_y, p_z, normal).is_zero() {
+            if self.evaluate_alt(p_x, p_y, p_z, part_x).is_zero() {
+              if self.evaluate_alt(p_x, p_y, p_z, part_y).is_zero() {
+                if self.evaluate_alt(p_x, p_y, p_z, part_z).is_zero() {
+                  return Some((p_x,p_y,p_z));
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    None
+  }
+
+
   pub fn has_singularity(self, normal: &Vec<Vec<FieldExtension>>, part_x:  &Vec<Vec<FieldExtension>>,  part_y:  &Vec<Vec<FieldExtension>>,  part_z:  &Vec<Vec<FieldExtension>>, N: u32) -> bool {
     for x in 0..(1<<N) {
       for y in 0..(1<<N) {
