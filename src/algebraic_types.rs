@@ -114,7 +114,7 @@ impl Polynomial {
 
 
 
-
+  #[allow(dead_code)]
   pub fn has_singularity_alt(self, normal: &Vec<Term>, part_x:  &Vec<Term>,  part_y:  &Vec<Term>,  part_z:  &Vec<Term>, N: u32) -> Option<(FieldExtension, FieldExtension, FieldExtension)> {
     for x in 0..(1<<N) {
       for y in 0..(1<<N) {

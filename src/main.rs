@@ -93,10 +93,11 @@ fn main() {
   }
 
   for i in 0..MAX_FIELD_EXT {
-    println!("{}: {}, {}", i+1, smooth[i], smooth[i] as f32 / 168 as f32);
+    println!("{}: {}", i+1, smooth[i]);
   }
-
-  println!("{:?}", now.elapsed());
+  println!();
+  println!("Degree: {}, Final /168: {}", DEGREE, smooth[MAX_FIELD_EXT-1] as f32 / 168.0);
+  println!("Total time: {:?}", now.elapsed());
 }
 
 
