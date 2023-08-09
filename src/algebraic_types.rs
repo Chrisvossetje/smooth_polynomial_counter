@@ -135,44 +135,6 @@ impl Polynomial {
     res
   }
 
-
-  // pub fn evaluate_alt(self, x: F2_i, y: F2_i, z: F2_i, lut: &Vec<Term>) -> F2_i {
-  //   let mut res = F2_i::zero(x.degree);
-  //   for i in 0..DPLUS2_CHOOSE_2 {
-  //     if (self.bits >> i) & 1 == 1 {
-  //       res += lut[i].evaluate(x, y, z);
-  //     }
-  //   }
-  //   res
-  // }
-
-  // #[allow(dead_code)]
-  // pub fn has_singularity_alt(self, normal: &Vec<Term>, part_x: &Vec<Term>, part_y: &Vec<Term>, part_z: &Vec<Term>, N: u16) -> Option<(F2_i, F2_i, F2_i)> {
-  //   for x in 0..(1<<N) {
-  //     for y in 0..(1<<N) {
-  //       for z in 0..(1<<N) {
-  //         if x | y | z == 0 {
-  //           continue;
-  //         }
-  //         let p_x = F2_i::new(x, N);
-  //         let p_y = F2_i::new(y, N);
-  //         let p_z = F2_i::new(z, N);
-  //         if self.evaluate_alt(p_x, p_y, p_z, normal).is_zero() {
-  //           if self.evaluate_alt(p_x, p_y, p_z, part_x).is_zero() {
-  //             if self.evaluate_alt(p_x, p_y, p_z, part_y).is_zero() {
-  //               if self.evaluate_alt(p_x, p_y, p_z, part_z).is_zero() {
-  //                 return Some((p_x,p_y,p_z));
-  //               }
-  //             }
-  //           }
-  //         }
-  //       }
-  //     }
-  //   }
-  //   None
-  // }
-
-
   pub fn has_singularity<const N: u8>(self, lookup: &Lookup<N>) -> bool {
     for x in 0..(1<<N) {
       for y in 0..(1<<N) {
