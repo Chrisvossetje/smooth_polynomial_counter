@@ -4,7 +4,8 @@ use std::vec;
 use crate::DPLUS2_CHOOSE_2;
 use crate::DEGREE;
 
-pub fn generate_single_number(x: u64,y: u64,z: u64, N: u16) -> u32 {
+
+pub fn generate_single_number<const N: u8>(x: u64,y: u64,z: u64) -> u32 {
   ((x << (N+1))+ (y << 1) + z) as u32
 }
 
@@ -22,6 +23,24 @@ fn transpose<T>(v: Vec<Vec<T>>) -> Vec<Vec<T>> {
       .collect()
 }
 
+
+pub struct Lookup <const N: u8> {
+  pub normal: Vec<Vec<F2_i<N>>>,
+  pub part_x: Vec<Vec<F2_i<N>>>,
+  pub part_y: Vec<Vec<F2_i<N>>>,
+  pub part_z: Vec<Vec<F2_i<N>>>,
+} 
+
+impl<const N: u8> Lookup<N> {
+  pub fn create(normal: &Vec<Term>, part_x: &Vec<Term>, part_y: &Vec<Term>, part_z: &Vec<Term>) -> Lookup<N> {
+    let n_res = Term::generate_points_for_multiple(&normal);
+    let x_res = Term::generate_points_for_multiple(&part_x);
+    let y_res = Term::generate_points_for_multiple(&part_y);
+    let z_res = Term::generate_points_for_multiple(&part_z);
+    
+    Lookup { normal: n_res, part_x: x_res, part_y: y_res, part_z: z_res }
+  }
+}
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct IsoPolynomial {
@@ -79,7 +98,7 @@ pub fn s3_lut(lut: &Vec<Term>) -> Vec<Vec<usize>> {
 }
 
 pub trait FieldTraits {
-  fn zero(n: u16) -> Self;
+  fn zero() -> Self;
   fn mul_ntimes(self, n: u8) -> Self;
 }
 
@@ -105,8 +124,8 @@ impl Polynomial {
     println!()
   }
 
-  pub fn evaluate(self, index: u32, lut: &Vec<Vec<F2_i>>, n:u16) -> F2_i {
-    let mut res = F2_i::zero(n);
+  pub fn evaluate<const N: u8>(self, index: u32, lut: &Vec<Vec<F2_i<N>>>) -> F2_i<N> {
+    let mut res = F2_i::zero();
     let index_lut = &lut[index as usize];
     for i in 0..DPLUS2_CHOOSE_2 {
       if (self.bits >> i) & 1 == 1 {
@@ -154,18 +173,18 @@ impl Polynomial {
   // }
 
 
-  pub fn has_singularity(self, normal: &Vec<Vec<F2_i>>, part_x:  &Vec<Vec<F2_i>>,  part_y:  &Vec<Vec<F2_i>>,  part_z:  &Vec<Vec<F2_i>>, N: u16) -> bool {
+  pub fn has_singularity<const N: u8>(self, lookup: &Lookup<N>) -> bool {
     for x in 0..(1<<N) {
       for y in 0..(1<<N) {
         for z in 0..2 {
           if x | y | z == 0 {
             continue;
           }
-          let index = generate_single_number(x, y, z, N);
-          if self.evaluate(index, normal, N).is_zero() {
-            if self.evaluate(index, part_x, N).is_zero() {
-              if self.evaluate(index, part_y, N).is_zero() {
-                if self.evaluate(index, part_z, N).is_zero() {
+          let index = generate_single_number::<N>(x, y, z);
+          if self.evaluate(index, &lookup.normal).is_zero() {
+            if self.evaluate(index, &lookup.part_x).is_zero() {
+              if self.evaluate(index, &lookup.part_y).is_zero() {
+                if self.evaluate(index, &lookup.part_z).is_zero() {
                   return true
                 }
               }
@@ -238,9 +257,9 @@ impl Term {
     Term { x_deg: 0, y_deg: 0, z_deg: 0, constant: 0 }
   }
 
-  pub fn evaluate(self, x: F2_i, y: F2_i, z: F2_i) -> F2_i {
+  pub fn evaluate<const N: u8>(self, x: F2_i<N>, y: F2_i<N>, z: F2_i<N>) -> F2_i<N> {
     if self.constant == 0 {
-      F2_i::zero(x.degree)
+      F2_i::zero()
     } else {
       x.mul_ntimes(self.x_deg) * y.mul_ntimes(self.y_deg) * z.mul_ntimes(self.z_deg)
     }
@@ -288,14 +307,14 @@ impl Term {
     (term_x, term_y, term_z)
   }
 
-  pub fn generate_precalculated_points(self, degree: u16) -> Vec<F2_i> {
+  pub fn generate_precalculated_points<const N: u8>(self) -> Vec<F2_i<N>> {
     let mut results = Vec::new();
-    for x in 0..(1<<degree) {
-      for y in 0..(1<<degree) {
+    for x in 0..(1<<N) {
+      for y in 0..(1<<N) {
         for z in 0..2 {
-          let p_x = F2_i::new(x, degree);
-          let p_y = F2_i::new(y, degree);
-          let p_z = F2_i::new(z, degree);
+          let p_x = F2_i::new(x);
+          let p_y = F2_i::new(y);
+          let p_z = F2_i::new(z);
           let result = self.evaluate(p_x, p_y, p_z);
           results.push(result);
         }
@@ -305,30 +324,29 @@ impl Term {
   }
 
   
-  pub fn generate_points_for_multiple(terms: &Vec<Term>, N: u16) -> Vec<Vec<F2_i>> {
+  pub fn generate_points_for_multiple<const N: u8>(terms: &Vec<Term>) -> Vec<Vec<F2_i<N>>> {
     let mut resultant_terms = Vec::new();
     for t in terms {
-      resultant_terms.push(t.generate_precalculated_points(N));
+      resultant_terms.push(t.generate_precalculated_points());
     }
     transpose(resultant_terms)
   }
 }
 
 
-
+#[allow(non_camel_case_types)]
 #[derive(Debug, Copy, Clone, PartialEq)]
-pub struct F2_i {
+pub struct F2_i<const N: u8> {
   element: u16,
-  degree: u16,
 }
 
-impl FieldTraits for F2_i {
-    fn zero(degree: u16) -> Self {
-      F2_i { element: 0, degree}
+impl<const N: u8> FieldTraits for F2_i<N> {
+    fn zero() -> Self {
+      F2_i { element: 0}
     }
 
-    fn mul_ntimes(self, n: u8) -> F2_i {
-      let mut res = F2_i { element: 1 ,degree: self.degree };
+    fn mul_ntimes(self, n: u8) -> Self {
+      let mut res = F2_i { element: 1};
       for _ in 0..n {
         res *= self;
       }
@@ -336,14 +354,14 @@ impl FieldTraits for F2_i {
     }
 }
 
-impl F2_i {
-  pub fn new(element: u16, degree: u16) -> F2_i {
-    F2_i {element, degree}
+impl<const N: u8> F2_i<N> {
+  pub fn new(element: u16) -> F2_i<N> {
+    F2_i {element}
   }
 
   #[allow(dead_code)]
   pub fn print(&self) {
-    for n in (1..self.degree).rev() {
+    for n in (1..N).rev() {
       if (self.element >> n) & 1 == 1{
         print!("x^{} + ", n);
       }
@@ -356,7 +374,7 @@ impl F2_i {
   }
 
   
-  fn internal_mul(lhs: u64, rhs: u64, N: u16) -> u16 {
+  fn internal_mul(lhs: u64, rhs: u64) -> u16 {
     const IRRED_PART: [u64; 11] = [0, 1, 0b11,0b11,0b11, 0b101, 0b11, 0b11, 0b11001, 0b11, 0b1001];
     let bitmask: u64 = !((!0) << N);
     let value = IRRED_PART[N as usize];
@@ -367,16 +385,16 @@ impl F2_i {
     // step 4: xor the two results together
     // step 5: this might overflow we need to repeat the process
     
-    let mut res = F2_i::clmul(lhs, rhs, N);
+    let mut res = F2_i::<N>::clmul(lhs, rhs);
     while (res >> N) > 0 {
       let lsb = res & bitmask;
       let msb = res >> N;
-      res = lsb ^ F2_i::clmul(msb, value, N);
+      res = lsb ^ F2_i::<N>::clmul(msb, value);
     }
     res as u16 
   }
 
-  fn clmul(lhs: u64, rhs: u64, N: u16) -> u64 {
+  fn clmul(lhs: u64, rhs: u64) -> u64 {
     let mut res = 0;
     for n in 0..N {
       if (lhs >> n) & 1 == 1 {
@@ -395,30 +413,30 @@ impl F2_i {
   }
 }
 
-impl Add for F2_i {
+impl<const N: u8> Add for F2_i<N> {
   type Output = Self;
   
   fn add(self, rhs: Self) -> Self::Output {
-    F2_i {element: self.element ^ rhs.element, degree: self.degree}
+    F2_i {element: self.element ^ rhs.element}
   }
 }
 
-impl Mul for F2_i {
+impl<const N: u8> Mul for F2_i<N> {
   type Output = Self;
 
   fn mul(self, rhs: Self) -> Self::Output {
-    F2_i {element: F2_i::internal_mul(self.element as u64, rhs.element as u64, self.degree), degree: self.degree}
+    F2_i {element: F2_i::<N>::internal_mul(self.element as u64, rhs.element as u64)}
   }
 }
 
-impl AddAssign for F2_i {
+impl<const N: u8> AddAssign for F2_i<N> {
   fn add_assign(&mut self, rhs: Self) {
     self.element = self.element ^ rhs.element;
   }
 }
 
-impl MulAssign for F2_i {
+impl<const N: u8> MulAssign for F2_i<N> {
   fn mul_assign(&mut self, rhs: Self) {
-    self.element = F2_i::internal_mul(self.element as u64, rhs.element as u64, self.degree);
+    self.element = F2_i::<N>::internal_mul(self.element as u64, rhs.element as u64);
   }
 }
