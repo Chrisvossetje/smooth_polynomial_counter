@@ -8,6 +8,8 @@ pub fn generate_single_number(x: u64,y: u64,z: u64, N: u32) -> u32 {
   ((x << (N+1))+ (y << 1) + z) as u32
 }
 
+
+
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct IsoPolynomial {
   pub representative: Polynomial,

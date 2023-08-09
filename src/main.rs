@@ -2,21 +2,36 @@ use std::{time::Instant, sync::{mpsc, Arc}, thread};
 
 use algebraic_types::{Polynomial, IsoPolynomial};
 
-use crate::algebraic_types::{Term, FieldExtension, generate_iso_polynomials};
+use crate::{algebraic_types::{Term, FieldExtension, generate_iso_polynomials}, field_extensions::F3_i};
 
 #[allow(non_snake_case)]
 mod algebraic_types;
+#[allow(non_camel_case_types)]
+mod field_extensions;
 
 const DEGREE: usize = 5;
 const DPLUS2_CHOOSE_2: usize = ((DEGREE+2) * (DEGREE+1)) / 2;
 
-const MAX_FIELD_EXT: usize = 6;
+const MAX_FIELD_EXT: usize = 8;
 
 const NUM_THREADS: usize = 16;
 
 const SECOND_HALF: bool = false;
 
 fn main() {
+
+
+  let a = F3_i::new(0b011001, 4);
+  let b = F3_i::new(0b100010, 4);
+
+  a.print();
+  b.print();
+
+  let c = a+b;
+
+  c.print();
+
+  return;
   let now = Instant::now();
 
   let normal = Polynomial::generate_default_lut();
