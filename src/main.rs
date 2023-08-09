@@ -2,7 +2,7 @@ use std::{time::Instant, sync::{mpsc, Arc}, thread};
 
 use algebraic_types::{Polynomial, IsoPolynomial};
 
-use crate::algebraic_types::{Term, FieldExtension, generate_iso_polynomials};
+use crate::algebraic_types::{Term, F2_i, generate_iso_polynomials};
 
 #[allow(non_snake_case)]
 mod algebraic_types;
@@ -10,7 +10,7 @@ mod algebraic_types;
 const DEGREE: usize = 5;
 const DPLUS2_CHOOSE_2: usize = ((DEGREE+2) * (DEGREE+1)) / 2;
 
-const MAX_FIELD_EXT: usize = 8;
+const MAX_FIELD_EXT: usize = 6;
 
 const NUM_THREADS: usize = 16;
 
@@ -22,13 +22,13 @@ fn main() {
   let normal = Polynomial::generate_default_lut();
   let (part_x, part_y, part_z) = Polynomial::generate_derative_luts(&normal);
 
-  // Each term now has for each degree for each term for each points calculated its fieldextension.
+  // Each term now has for each degree for each term for each points calculated its field extension.
   let mut normal_results = Vec::new();
   let mut part_x_results = Vec::new();
   let mut part_y_results = Vec::new();
   let mut part_z_results = Vec::new();
   
-  for n in 1..=MAX_FIELD_EXT as u32 {
+  for n in 1..=MAX_FIELD_EXT as u16 {
     normal_results.push(Term::generate_points_for_multiple(&normal, n));
     part_x_results.push(Term::generate_points_for_multiple(&part_x, n));
     part_y_results.push(Term::generate_points_for_multiple(&part_y, n));
@@ -44,14 +44,14 @@ fn main() {
   let iso_polys = generate_iso_polynomials(&normal);
   println!("Generated isomorphic polynomials");
   
+  
+  
+  
   println!("Start counting!");
-
 
   let chunk_size = (iso_polys.len() + NUM_THREADS - 1) / (NUM_THREADS);
   let half = chunk_size * NUM_THREADS;
-
   
-
   let arc_iso_polys = Arc::new(iso_polys);
 
 
@@ -112,7 +112,7 @@ fn main() {
 // 9:
 // 10:
 
-fn is_smooth(iso_polys: &Vec<IsoPolynomial>, start: usize, len: usize, normal_results: &Vec<Vec<Vec<FieldExtension>>>, part_x_results: &Vec<Vec<Vec<FieldExtension>>>, part_y_results: &Vec<Vec<Vec<FieldExtension>>>, part_z_results: &Vec<Vec<Vec<FieldExtension>>>) -> [usize; MAX_FIELD_EXT] {
+fn is_smooth(iso_polys: &Vec<IsoPolynomial>, start: usize, len: usize, normal_results: &Vec<Vec<Vec<F2_i>>>, part_x_results: &Vec<Vec<Vec<F2_i>>>, part_y_results: &Vec<Vec<Vec<F2_i>>>, part_z_results: &Vec<Vec<Vec<F2_i>>>) -> [usize; MAX_FIELD_EXT] {
   let mut count: [usize; MAX_FIELD_EXT] = [0; MAX_FIELD_EXT];
 
   'outer: for i in start..(start+len) {
@@ -120,7 +120,7 @@ fn is_smooth(iso_polys: &Vec<IsoPolynomial>, start: usize, len: usize, normal_re
     let iso_poly = &iso_polys[i];
     let (poly, size) = iso_poly.deconstruct();
     for n in 1..=MAX_FIELD_EXT as usize {
-      if poly.has_singularity(&normal_results[n-1], &part_x_results[n-1], &part_y_results[n-1], &part_z_results[n-1], n as u32) {continue 'outer;}        // 823543
+      if poly.has_singularity(&normal_results[n-1], &part_x_results[n-1], &part_y_results[n-1], &part_z_results[n-1], n as u16) {continue 'outer;}        // 823543
       count[n-1] += size as usize;
     }
   }

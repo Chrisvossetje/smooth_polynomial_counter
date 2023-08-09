@@ -4,9 +4,24 @@ use std::vec;
 use crate::DPLUS2_CHOOSE_2;
 use crate::DEGREE;
 
-pub fn generate_single_number(x: u64,y: u64,z: u64, N: u32) -> u32 {
+pub fn generate_single_number(x: u64,y: u64,z: u64, N: u16) -> u32 {
   ((x << (N+1))+ (y << 1) + z) as u32
 }
+
+fn transpose<T>(v: Vec<Vec<T>>) -> Vec<Vec<T>> {
+  assert!(!v.is_empty());
+  let len = v[0].len();
+  let mut iters: Vec<_> = v.into_iter().map(|n| n.into_iter()).collect();
+  (0..len)
+      .map(|_| {
+          iters
+              .iter_mut()
+              .map(|n| n.next().unwrap())
+              .collect::<Vec<T>>()
+      })
+      .collect()
+}
+
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct IsoPolynomial {
@@ -64,7 +79,7 @@ pub fn s3_lut(lut: &Vec<Term>) -> Vec<Vec<usize>> {
 }
 
 pub trait FieldTraits {
-  fn zero(n: u32) -> Self;
+  fn zero(n: u16) -> Self;
   fn mul_ntimes(self, n: u8) -> Self;
 }
 
@@ -90,58 +105,56 @@ impl Polynomial {
     println!()
   }
 
-  // TODO: d+ 2 choose 2
-  pub fn evaluate(self, index: u32, lut: &Vec<Vec<FieldExtension>>, n:u32) -> FieldExtension {
-    let mut res = FieldExtension::zero(n);
+  pub fn evaluate(self, index: u32, lut: &Vec<Vec<F2_i>>, n:u16) -> F2_i {
+    let mut res = F2_i::zero(n);
+    let index_lut = &lut[index as usize];
     for i in 0..DPLUS2_CHOOSE_2 {
       if (self.bits >> i) & 1 == 1 {
-        res += lut[i][index as usize];
+        res += index_lut[i];
       }
     }
     res
   }
 
 
-  pub fn evaluate_alt(self, x: FieldExtension, y: FieldExtension, z: FieldExtension, lut: &Vec<Term>) -> FieldExtension {
-    let mut res = FieldExtension::zero(x.degree);
-    for i in 0..DPLUS2_CHOOSE_2 {
-      if (self.bits >> i) & 1 == 1 {
-        res += lut[i].evaluate(x, y, z);
-      }
-    }
-    res
-  }
+  // pub fn evaluate_alt(self, x: F2_i, y: F2_i, z: F2_i, lut: &Vec<Term>) -> F2_i {
+  //   let mut res = F2_i::zero(x.degree);
+  //   for i in 0..DPLUS2_CHOOSE_2 {
+  //     if (self.bits >> i) & 1 == 1 {
+  //       res += lut[i].evaluate(x, y, z);
+  //     }
+  //   }
+  //   res
+  // }
+
+  // #[allow(dead_code)]
+  // pub fn has_singularity_alt(self, normal: &Vec<Term>, part_x: &Vec<Term>, part_y: &Vec<Term>, part_z: &Vec<Term>, N: u16) -> Option<(F2_i, F2_i, F2_i)> {
+  //   for x in 0..(1<<N) {
+  //     for y in 0..(1<<N) {
+  //       for z in 0..(1<<N) {
+  //         if x | y | z == 0 {
+  //           continue;
+  //         }
+  //         let p_x = F2_i::new(x, N);
+  //         let p_y = F2_i::new(y, N);
+  //         let p_z = F2_i::new(z, N);
+  //         if self.evaluate_alt(p_x, p_y, p_z, normal).is_zero() {
+  //           if self.evaluate_alt(p_x, p_y, p_z, part_x).is_zero() {
+  //             if self.evaluate_alt(p_x, p_y, p_z, part_y).is_zero() {
+  //               if self.evaluate_alt(p_x, p_y, p_z, part_z).is_zero() {
+  //                 return Some((p_x,p_y,p_z));
+  //               }
+  //             }
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
+  //   None
+  // }
 
 
-
-  #[allow(dead_code)]
-  pub fn has_singularity_alt(self, normal: &Vec<Term>, part_x:  &Vec<Term>,  part_y:  &Vec<Term>,  part_z:  &Vec<Term>, N: u32) -> Option<(FieldExtension, FieldExtension, FieldExtension)> {
-    for x in 0..(1<<N) {
-      for y in 0..(1<<N) {
-        for z in 0..(1<<N) {
-          if x | y | z == 0 {
-            continue;
-          }
-          let p_x = FieldExtension::new(x, N);
-          let p_y = FieldExtension::new(y, N);
-          let p_z = FieldExtension::new(z, N);
-          if self.evaluate_alt(p_x, p_y, p_z, normal).is_zero() {
-            if self.evaluate_alt(p_x, p_y, p_z, part_x).is_zero() {
-              if self.evaluate_alt(p_x, p_y, p_z, part_y).is_zero() {
-                if self.evaluate_alt(p_x, p_y, p_z, part_z).is_zero() {
-                  return Some((p_x,p_y,p_z));
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    None
-  }
-
-
-  pub fn has_singularity(self, normal: &Vec<Vec<FieldExtension>>, part_x:  &Vec<Vec<FieldExtension>>,  part_y:  &Vec<Vec<FieldExtension>>,  part_z:  &Vec<Vec<FieldExtension>>, N: u32) -> bool {
+  pub fn has_singularity(self, normal: &Vec<Vec<F2_i>>, part_x:  &Vec<Vec<F2_i>>,  part_y:  &Vec<Vec<F2_i>>,  part_z:  &Vec<Vec<F2_i>>, N: u16) -> bool {
     for x in 0..(1<<N) {
       for y in 0..(1<<N) {
         for z in 0..2 {
@@ -225,9 +238,9 @@ impl Term {
     Term { x_deg: 0, y_deg: 0, z_deg: 0, constant: 0 }
   }
 
-  pub fn evaluate(self, x: FieldExtension, y: FieldExtension, z: FieldExtension) -> FieldExtension {
+  pub fn evaluate(self, x: F2_i, y: F2_i, z: F2_i) -> F2_i {
     if self.constant == 0 {
-      FieldExtension::zero(x.degree)
+      F2_i::zero(x.degree)
     } else {
       x.mul_ntimes(self.x_deg) * y.mul_ntimes(self.y_deg) * z.mul_ntimes(self.z_deg)
     }
@@ -275,14 +288,14 @@ impl Term {
     (term_x, term_y, term_z)
   }
 
-  pub fn generate_precalculated_points(self, degree: u32) -> Vec<FieldExtension> {
+  pub fn generate_precalculated_points(self, degree: u16) -> Vec<F2_i> {
     let mut results = Vec::new();
     for x in 0..(1<<degree) {
       for y in 0..(1<<degree) {
         for z in 0..2 {
-          let p_x = FieldExtension::new(x, degree);
-          let p_y = FieldExtension::new(y, degree);
-          let p_z = FieldExtension::new(z, degree);
+          let p_x = F2_i::new(x, degree);
+          let p_y = F2_i::new(y, degree);
+          let p_z = F2_i::new(z, degree);
           let result = self.evaluate(p_x, p_y, p_z);
           results.push(result);
         }
@@ -291,30 +304,31 @@ impl Term {
     results
   }
 
-  pub fn generate_points_for_multiple(terms: &Vec<Term>, N: u32) -> Vec<Vec<FieldExtension>> {
+  
+  pub fn generate_points_for_multiple(terms: &Vec<Term>, N: u16) -> Vec<Vec<F2_i>> {
     let mut resultant_terms = Vec::new();
     for t in terms {
       resultant_terms.push(t.generate_precalculated_points(N));
     }
-    resultant_terms
+    transpose(resultant_terms)
   }
 }
 
 
 
 #[derive(Debug, Copy, Clone, PartialEq)]
-pub struct FieldExtension {
-  element: u32,
-  degree: u32,
+pub struct F2_i {
+  element: u16,
+  degree: u16,
 }
 
-impl FieldTraits for FieldExtension {
-    fn zero(degree: u32) -> Self {
-      FieldExtension { element: 0, degree}
+impl FieldTraits for F2_i {
+    fn zero(degree: u16) -> Self {
+      F2_i { element: 0, degree}
     }
 
-    fn mul_ntimes(self, n: u8) -> FieldExtension {
-      let mut res = FieldExtension { element: 1 ,degree: self.degree };
+    fn mul_ntimes(self, n: u8) -> F2_i {
+      let mut res = F2_i { element: 1 ,degree: self.degree };
       for _ in 0..n {
         res *= self;
       }
@@ -322,9 +336,9 @@ impl FieldTraits for FieldExtension {
     }
 }
 
-impl FieldExtension {
-  pub fn new(element: u32, degree: u32) -> FieldExtension {
-    FieldExtension {element, degree}
+impl F2_i {
+  pub fn new(element: u16, degree: u16) -> F2_i {
+    F2_i {element, degree}
   }
 
   #[allow(dead_code)]
@@ -342,7 +356,7 @@ impl FieldExtension {
   }
 
   
-  fn internal_mul(lhs: u64, rhs: u64, N: u32) -> u32 {
+  fn internal_mul(lhs: u64, rhs: u64, N: u16) -> u16 {
     const IRRED_PART: [u64; 11] = [0, 1, 0b11,0b11,0b11, 0b101, 0b11, 0b11, 0b11001, 0b11, 0b1001];
     let bitmask: u64 = !((!0) << N);
     let value = IRRED_PART[N as usize];
@@ -353,16 +367,16 @@ impl FieldExtension {
     // step 4: xor the two results together
     // step 5: this might overflow we need to repeat the process
     
-    let mut res = FieldExtension::clmul(lhs, rhs, N);
+    let mut res = F2_i::clmul(lhs, rhs, N);
     while (res >> N) > 0 {
       let lsb = res & bitmask;
       let msb = res >> N;
-      res = lsb ^ FieldExtension::clmul(msb, value, N);
+      res = lsb ^ F2_i::clmul(msb, value, N);
     }
-    res as u32 
+    res as u16 
   }
 
-  fn clmul(lhs: u64, rhs: u64, N: u32) -> u64 {
+  fn clmul(lhs: u64, rhs: u64, N: u16) -> u64 {
     let mut res = 0;
     for n in 0..N {
       if (lhs >> n) & 1 == 1 {
@@ -381,30 +395,30 @@ impl FieldExtension {
   }
 }
 
-impl Add for FieldExtension {
+impl Add for F2_i {
   type Output = Self;
   
   fn add(self, rhs: Self) -> Self::Output {
-    FieldExtension {element: self.element ^ rhs.element, degree: self.degree}
+    F2_i {element: self.element ^ rhs.element, degree: self.degree}
   }
 }
 
-impl Mul for FieldExtension {
+impl Mul for F2_i {
   type Output = Self;
 
   fn mul(self, rhs: Self) -> Self::Output {
-    FieldExtension {element: FieldExtension::internal_mul(self.element as u64, rhs.element as u64, self.degree), degree: self.degree}
+    F2_i {element: F2_i::internal_mul(self.element as u64, rhs.element as u64, self.degree), degree: self.degree}
   }
 }
 
-impl AddAssign for FieldExtension {
+impl AddAssign for F2_i {
   fn add_assign(&mut self, rhs: Self) {
     self.element = self.element ^ rhs.element;
   }
 }
 
-impl MulAssign for FieldExtension {
+impl MulAssign for F2_i {
   fn mul_assign(&mut self, rhs: Self) {
-    self.element = FieldExtension::internal_mul(self.element as u64, rhs.element as u64, self.degree);
+    self.element = F2_i::internal_mul(self.element as u64, rhs.element as u64, self.degree);
   }
 }
