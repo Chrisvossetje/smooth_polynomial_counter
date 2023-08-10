@@ -2,7 +2,7 @@ use std::{time::Instant, sync::{mpsc, Arc}, thread};
 
 use algebraic_types::{Polynomial, IsoPolynomial, Lookup};
 
-use crate::algebraic_types::generate_iso_polynomials;
+use crate::algebraic_types::{generate_iso_polynomials, Matrix};
 
 #[allow(non_snake_case)]
 mod algebraic_types;
@@ -17,6 +17,22 @@ type SuperType = (Lookup<1>,Lookup<2>,Lookup<3>,Lookup<4>,Lookup<5>,Lookup<6>,Lo
 
 
 fn main() {
+
+  // loop over all possible binary matrices
+  let mut pgl3_f2: Vec<Matrix> = vec![];
+  for i in 0..(1<<9) {
+    let mut data: [[u8;3];3] = [[0;3];3];
+    for j in 0..9 {
+      data[j/3][j%3] = ((i >> j) & 1) as u8;
+    }
+    let matrix = Matrix::new(data);
+    if matrix.determinant() % 2 == 1 {
+      pgl3_f2.push(matrix);
+    }
+  }
+
+  println!("Number of matrices: {}", pgl3_f2.len());
+
   let now = Instant::now();
 
   let normal = Polynomial::generate_default_lut();
@@ -60,7 +76,7 @@ fn main() {
 
     // Spawn a new thread
     thread::spawn(move || {
-      let result =  
+        let result =  
         is_smooth(&local_iso_polys, start_index, chunk_size, &local_super_lookup);
       a_tx.send(result).unwrap();      
     });
