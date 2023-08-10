@@ -7,15 +7,15 @@
     {
       "type": "lldb",
       "request": "launch",
-      "name": "Debug executable 'AffieneVariety'",
+      "name": "Debug executable 'affiene_variety'",
       "cargo": {
         "args": [
           "build",
-          "--bin=AffieneVariety",
-          "--package=AffieneVariety"
+          "--bin=affiene_variety",
+          "--package=affiene_variety"
         ],
         "filter": {
-          "name": "AffieneVariety",
+          "name": "affiene_variety",
           "kind": "bin"
         }
       },
@@ -25,16 +25,16 @@
     {
       "type": "lldb",
       "request": "launch",
-      "name": "Debug unit tests in executable 'AffieneVariety'",
+      "name": "Debug unit tests in executable 'affiene_variety'",
       "cargo": {
         "args": [
           "test",
           "--no-run",
-          "--bin=AffieneVariety",
-          "--package=AffieneVariety"
+          "--bin=affiene_variety",
+          "--package=affiene_variety"
         ],
         "filter": {
-          "name": "AffieneVariety",
+          "name": "affiene_variety",
           "kind": "bin"
         }
       },
