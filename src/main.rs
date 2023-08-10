@@ -1,12 +1,16 @@
 use std::{time::Instant, sync::{mpsc, Arc, Mutex}, thread, fs};
 
-use algebraic_types::{IsoPolynomial, Lookup};
+use algebraic_types::{IsoPolynomial, Lookup, PolynomialResult};
 
-use crate::{{algebraic_types::{generate_iso_polynomials}, field_extensions::F3_i, Matrix}, polynomials::{Polynomial, generate_transform_lut, Term}};
+use crate::{algebraic_types::generate_iso_polynomials, polynomials::{Polynomial, generate_transform_lut}, algebraic_types::Matrix};
 
 #[allow(non_snake_case)]
+#[allow(non_camel_case_types)]
 mod algebraic_types;
+#[allow(non_snake_case)]
+#[allow(non_camel_case_types)]
 mod polynomials;
+#[allow(non_snake_case)]
 #[allow(non_camel_case_types)]
 mod field_extensions;
 
@@ -24,8 +28,7 @@ const FILE_NAME: &str = "./output.txt";
 
 // CHANGE THIS:
 type SuperType = (Lookup<1>,Lookup<2>,Lookup<3>,Lookup<4>,Lookup<5>,Lookup<6>,
-                  // Lookup<7>,Lookup<8>,
-                  // Lookup<9>,Lookup<10>,
+                  // Lookup<7>,Lookup<8>, Lookup<9>,Lookup<10>,
                   );
 
 #[derive(Debug,Clone,Copy,PartialEq)]
@@ -39,7 +42,7 @@ fn main() {
 
   // loop over all possible binary matrices
   println!("Generate matrices");
-  let mut pgl3_f2 = Matrix::generate_pgl3_f2();
+  let pgl3_f2 = Matrix::generate_pgl3_f2();
   println!("Number of matrices: {}", pgl3_f2.len());
   println!();
 
@@ -142,7 +145,7 @@ fn main() {
           }
         }
         if PRINTING {
-          println!("Chunks left: {index} | Total Chunks: {chunk_length} | Estimated time: {}", index as f64 * (Instant::now() - poly_time).as_secs_f64() / (chunk_length - index) as f64);
+          println!("Chunks left: {index} | Total Chunks: {chunk_length} | Estimated time: {:.2}", index as f64 * (Instant::now() - poly_time).as_secs_f64() / (chunk_length - index) as f64);
         }
 
         let result =  
@@ -174,25 +177,13 @@ fn main() {
   }
   println!();
   println!("Amount of isomorphism classes: {}",results.len());
+  println!("Frequency: {:.0}", results.iter().fold(0.0 as f32, |acc, t| acc + (t.poly.size as f32 / f168)));
   println!("Polynomials had Degree: {}",  DEGREE);
   println!("Total time: {:?}", start_time.elapsed());
 }
 
 
-struct PolynomialResult {
-  poly: IsoPolynomial,
-  points_on_curve: [usize; MAX_FIELD_EXT],
-}
 
-impl PolynomialResult {
-  pub fn new(iso_poly: IsoPolynomial, points_on_curve: [usize; MAX_FIELD_EXT]) -> PolynomialResult {
-    PolynomialResult { poly: iso_poly, points_on_curve }
-  }
-
-  pub fn to_string(&self, normal: &Vec<Term>) -> String {
-    format!("{} | {} | {:?}", self.poly.representative.str(normal), self.poly.size, self.points_on_curve)
-  }
-}
 
 
 fn is_smooth(iso_polys: &Vec<IsoPolynomial>, start: usize, end: usize, super_lut: &SuperType) -> ([usize; MAX_FIELD_EXT], Vec<PolynomialResult>) {
@@ -234,6 +225,8 @@ fn is_smooth(iso_polys: &Vec<IsoPolynomial>, start: usize, end: usize, super_lut
     if result == None {continue;}
     count[5] += size as usize;
     points_on_curve[5] += result.unwrap();
+
+
 
     // let result = poly.has_singularity(&super_lut.6);
     // if result == None {continue;}

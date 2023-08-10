@@ -1,6 +1,6 @@
-use std::collections::HashMap;
 
-use crate::{DPLUS2_CHOOSE_2, algebraic_types::{F2_i, FieldTraits, Lookup, Matrix}, DEGREE};
+use crate::{DPLUS2_CHOOSE_2, algebraic_types::{Lookup, Matrix}, DEGREE, field_extensions::{F2_i, FieldTraits}};
+
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Polynomial {
@@ -103,16 +103,6 @@ impl Polynomial {
         .collect()
   }
 
-  pub fn give_permutation(self, lut: &Vec<usize>) -> Polynomial {
-    let mut result: u32 = 0;
-    for i in 0..DPLUS2_CHOOSE_2 {
-      if (self.bits >> i) & 1 == 1 {
-        result |= 1 << lut[i]; 
-      }
-    }
-    Polynomial { bits: result }
-  }
-
   pub fn generate_derative_luts(default_lut: &Vec<Term>) -> (Vec<Term>, Vec<Term>, Vec<Term>) {
     let mut lut_x: Vec<Term> = vec![];
     let mut lut_y: Vec<Term> = vec![];
@@ -164,17 +154,7 @@ impl Term {
   }
 
   pub fn str(self) -> String {
-    format!("{} X^{} Y^{} Z^{}", self.constant, self.x_deg, self.y_deg, self.z_deg)
-  }
-
-  pub fn generate_isomorphisms(&self) -> [Term; 6] {
-    let id = *self;
-    let s_13 = Term{ x_deg: self.z_deg, y_deg: self.y_deg, z_deg: self.x_deg, constant: self.constant };
-    let s_23 = Term{ x_deg: self.x_deg, y_deg: self.z_deg, z_deg: self.y_deg, constant: self.constant };
-    let s_12 = Term{ x_deg: self.y_deg, y_deg: self.x_deg, z_deg: self.z_deg, constant: self.constant };
-    let s_123 = Term{ x_deg: self.y_deg, y_deg: self.z_deg, z_deg: self.x_deg, constant: self.constant };
-    let s_132 = Term{ x_deg: self.z_deg, y_deg: self.x_deg, z_deg: self.y_deg, constant: self.constant };
-    [id,s_13,s_23,s_12,s_123,s_132]
+    format!("X^{} Y^{} Z^{}", self.x_deg, self.y_deg, self.z_deg)
   }
   
   pub fn generate_derivatives(self) -> (Term, Term, Term) {
@@ -221,10 +201,6 @@ impl Term {
     results
   }
 
-  pub fn format(self) -> String {
-    format!("X^{} Y^{} Z^{}", self.x_deg, self.y_deg, self.z_deg)
-  }
-
   pub fn generate_points_for_multiple<const N: u8>(terms: &Vec<Term>) -> Vec<Vec<F2_i<N>>> {
     let mut resultant_terms = Vec::new();
     for t in terms {
@@ -251,10 +227,6 @@ impl Term {
       }
     }
     result
-  }
-
-  pub fn is_similar(self, other: Term) -> bool {
-    self.x_deg == other.x_deg && self.y_deg == other.y_deg && self.z_deg == other.z_deg
   }
 }
 

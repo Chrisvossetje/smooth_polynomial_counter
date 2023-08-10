@@ -1,6 +1,118 @@
 use std::ops::{Add, Mul, AddAssign, MulAssign};
 
-use crate::MAX_FIELD_EXT;
+
+
+pub trait FieldTraits {
+  fn zero() -> Self;
+  fn mul_ntimes(self, n: u8) -> Self;
+}
+
+#[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub struct F2_i<const N: u8> {
+  element: u16,
+}
+
+impl<const N: u8> FieldTraits for F2_i<N> {
+    fn zero() -> Self {
+      F2_i { element: 0}
+    }
+
+    fn mul_ntimes(self, n: u8) -> Self {
+      let mut res = F2_i { element: 1};
+      for _ in 0..n {
+        res *= self;
+      }
+      res
+    }
+}
+
+impl<const N: u8> F2_i<N> {
+  pub fn new(element: u16) -> F2_i<N> {
+    F2_i {element}
+  }
+
+  #[allow(dead_code)]
+  pub fn print(&self) {
+    for n in (1..N).rev() {
+      if (self.element >> n) & 1 == 1{
+        print!("x^{} + ", n);
+      }
+    }
+    if self.element & 1 == 1 {
+      println!("1");
+    } else {
+      println!("0");
+    }
+  }
+
+  
+  fn internal_mul(lhs: u64, rhs: u64) -> u16 {
+    const IRRED_PART: [u64; 11] = [0, 1, 0b11,0b11,0b11, 0b101, 0b11, 0b11, 0b11001, 0b11, 0b1001];
+    let bitmask: u64 = !((!0) << N);
+    let value = IRRED_PART[N as usize];
+
+    // step 1: take clmul of the two numbers
+    // step 2: take the N most least significant bits of the result
+    // step 3: take remaining bits and clmul by the irreducible polynomial
+    // step 4: xor the two results together
+    // step 5: this might overflow we need to repeat the process
+    
+    let mut res = F2_i::<N>::clmul(lhs, rhs);
+    while (res >> N) > 0 {
+      let lsb = res & bitmask;
+      let msb = res >> N;
+      res = lsb ^ F2_i::<N>::clmul(msb, value);
+    }
+    res as u16 
+  }
+
+  fn clmul(lhs: u64, rhs: u64) -> u64 {
+    let mut res = 0;
+    for n in 0..N {
+      if (lhs >> n) & 1 == 1 {
+        res ^= rhs << n;
+      }
+    }
+    res
+  }
+
+  pub fn is_zero(&self) -> bool {
+    if self.element == 0 {
+      true
+    } else {
+      false
+    }
+  }
+}
+
+impl<const N: u8> Add for F2_i<N> {
+  type Output = Self;
+  
+  fn add(self, rhs: Self) -> Self::Output {
+    F2_i {element: self.element ^ rhs.element}
+  }
+}
+
+impl<const N: u8> Mul for F2_i<N> {
+  type Output = Self;
+
+  fn mul(self, rhs: Self) -> Self::Output {
+    F2_i {element: F2_i::<N>::internal_mul(self.element as u64, rhs.element as u64)}
+  }
+}
+
+impl<const N: u8> AddAssign for F2_i<N> {
+  fn add_assign(&mut self, rhs: Self) {
+    self.element = self.element ^ rhs.element;
+  }
+}
+
+impl<const N: u8> MulAssign for F2_i<N> {
+  fn mul_assign(&mut self, rhs: Self) {
+    self.element = F2_i::<N>::internal_mul(self.element as u64, rhs.element as u64);
+  }
+}
 
 
 // A polynomial over the field over 3 elements, represented in bits
@@ -12,11 +124,13 @@ pub struct F3_i {
 }
 
 impl F3_i {
+  #[allow(dead_code)]
   pub fn new(element: u16, degree: u32) -> F3_i {
     F3_i { element: element, degree: degree }
   }
-
+  
   // print each coefficient as a number
+  #[allow(dead_code)]
   pub fn print(&self) {
     for j in 0..self.degree {
       let i = self.degree - j - 1;
