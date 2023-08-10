@@ -39,6 +39,7 @@ fn main() {
   }
 
   println!("Number of matrices: {}", pgl3_f2.len());
+  println!();
 
 
   println!("Generate lookup stuff");
