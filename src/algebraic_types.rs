@@ -113,18 +113,18 @@ pub fn generate_iso_polynomials(transform_lut: &Vec<Vec<u32>>, lut: &Vec<Term>, 
       things[i] = false;
       let poly = Polynomial::new(i as u32);
       let mut count = 1;
+      let mut smallest_poly = poly;
       for i in 0..transform_lut.len() { // loop over matrices
         let perm_poly = poly.transform_by_matrix(&transform_lut[i]);
-        if perm_poly.bits == 0  {
-          poly.print(lut);
-          pgl3_f2[i].print();
-        }
         if things[perm_poly.bits as usize] {
           count += 1;
           things[perm_poly.bits as usize] = false;
+          if perm_poly.bits.count_ones() < smallest_poly.bits.count_ones() {
+            smallest_poly = perm_poly;
+          }
         }
       }
-      iso_polys.push(IsoPolynomial { representative: poly, size: count});
+      iso_polys.push(IsoPolynomial { representative: smallest_poly, size: count});
     }
   }
   iso_polys

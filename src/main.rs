@@ -14,21 +14,21 @@ mod polynomials;
 #[allow(non_camel_case_types)]
 mod field_extensions;
 
-const DEGREE: usize = 5;
+const DEGREE: usize = 6;
 const DPLUS2_CHOOSE_2: usize = ((DEGREE+2) * (DEGREE+1)) / 2;
 
-const MAX_FIELD_EXT: usize = 6;
+const MAX_FIELD_EXT: usize = 10;
 
 
 const NUM_THREADS: usize = 16;
 const CHUNK_SIZE: usize = 1024;
-const PRINTING: bool = false;
+const PRINTING: bool = true;
 
 const FILE_NAME: &str = "./output.txt";
 
 // CHANGE THIS:
 type SuperType = (Lookup<1>,Lookup<2>,Lookup<3>,Lookup<4>,Lookup<5>,Lookup<6>,
-                  // Lookup<7>,Lookup<8>, Lookup<9>,Lookup<10>,
+                  Lookup<7>,Lookup<8>, Lookup<9>,Lookup<10>,
                   );
 
 #[derive(Debug,Clone,Copy,PartialEq)]
@@ -59,10 +59,10 @@ fn main() {
                                   Lookup::<4>::create(&normal, &part_x, &part_y, &part_z),
                                   Lookup::<5>::create(&normal, &part_x, &part_y, &part_z),
                                   Lookup::<6>::create(&normal, &part_x, &part_y, &part_z),
-                                  // Lookup::<7>::create(&normal, &part_x, &part_y, &part_z),
-                                  // Lookup::<8>::create(&normal, &part_x, &part_y, &part_z),
-                                  // Lookup::<9>::create(&normal, &part_x, &part_y, &part_z),
-                                  // Lookup::<10>::create(&normal, &part_x, &part_y, &part_z),
+                                  Lookup::<7>::create(&normal, &part_x, &part_y, &part_z),
+                                  Lookup::<8>::create(&normal, &part_x, &part_y, &part_z),
+                                  Lookup::<9>::create(&normal, &part_x, &part_y, &part_z),
+                                  Lookup::<10>::create(&normal, &part_x, &part_y, &part_z),
                                 );
 
   let lookup_time = Instant::now();
@@ -83,15 +83,12 @@ fn main() {
   // Counting the polys for verification
   let f168 = pgl3_f2.len() as f32;
   let mut sum: u32 = 0;
-  let mut freq: f32 = 0.;
   for isopoly in &iso_polys {
     let (_, size) = isopoly.deconstruct();
-    let aut = f168 / size as f32;
-    freq += aut;
     sum += size;
   }
   let poly_time = Instant::now();
-  println!("Frequency: {}, sum: {}", freq, sum);
+  println!("Total polynomials: {}", sum);
   println!("Generating took: {:?}", (poly_time-lookup_time));
   println!();
   
@@ -228,25 +225,25 @@ fn is_smooth(iso_polys: &Vec<IsoPolynomial>, start: usize, end: usize, super_lut
 
 
 
-    // let result = poly.has_singularity(&super_lut.6);
-    // if result == None {continue;}
-    // count[6] += size as usize;
-    // points_on_curve[6] += result.unwrap();
+    let result = poly.has_singularity(&super_lut.6);
+    if result == None {continue;}
+    count[6] += size as usize;
+    points_on_curve[6] += result.unwrap();
 
-    // let result = poly.has_singularity(&super_lut.7);
-    // if result == None {continue;}
-    // count[7] += size as usize;
-    // points_on_curve[7] += result.unwrap();
+    let result = poly.has_singularity(&super_lut.7);
+    if result == None {continue;}
+    count[7] += size as usize;
+    points_on_curve[7] += result.unwrap();
 
-    // let result = poly.has_singularity(&super_lut.8);
-    // if result == None {continue;}
-    // count[8] += size as usize;
-    // points_on_curve[8] += result.unwrap();
+    let result = poly.has_singularity(&super_lut.8);
+    if result == None {continue;}
+    count[8] += size as usize;
+    points_on_curve[8] += result.unwrap();
 
-    // let result = poly.has_singularity(&super_lut.9);
-    // if result == None {continue;}
-    // count[9] += size as usize;
-    // points_on_curve[9] += result.unwrap();
+    let result = poly.has_singularity(&super_lut.9);
+    if result == None {continue;}
+    count[9] += size as usize;
+    points_on_curve[9] += result.unwrap();
 
 
     results.push(PolynomialResult::new(*iso_poly, points_on_curve))
