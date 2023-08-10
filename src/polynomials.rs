@@ -12,16 +12,27 @@ impl Polynomial {
     Polynomial { bits: bits }
   }
 
-  #[allow(dead_code)]
-  pub fn print(self, lut: &Vec<Term>) {
+  pub fn str(&self, lut: &Vec<Term>) -> String {
+    let mut poly_str = String::new();
+    let mut empty = true;
     for i in 0..DPLUS2_CHOOSE_2 {
       if (self.bits >> i) & 1 == 1 {
         if lut[i].constant != 0 { 
-          print!("{} + ", lut[i].str())
+          if empty {
+            poly_str = format!("{}", lut[i].str());
+            empty = false;
+          } else {
+            poly_str = format!("{} + {}", poly_str, lut[i].str());
+          }
         }
       }
     }
-    println!()
+    poly_str
+  }
+
+  #[allow(dead_code)]
+  pub fn print(&self, lut: &Vec<Term>) {
+    println!("{}", self.str(lut));
   }
 
   pub fn evaluate<const N: u8>(self, index: u32, lut: &Vec<Vec<F2_i<N>>>) -> F2_i<N> {

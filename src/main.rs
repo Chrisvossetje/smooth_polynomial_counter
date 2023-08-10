@@ -1,8 +1,8 @@
-use std::{time::Instant, sync::{mpsc, Arc, Mutex}, thread, string, fs};
+use std::{time::Instant, sync::{mpsc, Arc, Mutex}, thread, fs};
 
-use algebraic_types::{Polynomial, IsoPolynomial, Lookup, Term};
+use algebraic_types::{IsoPolynomial, Lookup};
 
-use crate::{algebraic_types::{generate_iso_polynomials, Matrix}, polynomials::{Polynomial, generate_transform_lut, Term, exponentiate_linear_polynomial}};
+use crate::{algebraic_types::{generate_iso_polynomials, Matrix}, polynomials::{Polynomial, generate_transform_lut, Term}};
 
 #[allow(non_snake_case)]
 mod algebraic_types;
@@ -11,7 +11,7 @@ mod polynomials;
 const DEGREE: usize = 5;
 const DPLUS2_CHOOSE_2: usize = ((DEGREE+2) * (DEGREE+1)) / 2;
 
-const MAX_FIELD_EXT: usize = 8;
+const MAX_FIELD_EXT: usize = 6;
 
 
 const NUM_THREADS: usize = 16;
@@ -22,7 +22,7 @@ const FILE_NAME: &str = "./output.txt";
 
 // CHANGE THIS:
 type SuperType = (Lookup<1>,Lookup<2>,Lookup<3>,Lookup<4>,Lookup<5>,Lookup<6>,
-                  Lookup<7>,Lookup<8>,
+                  // Lookup<7>,Lookup<8>,
                   // Lookup<9>,Lookup<10>,
                   );
 
@@ -54,8 +54,8 @@ fn main() {
                                   Lookup::<4>::create(&normal, &part_x, &part_y, &part_z),
                                   Lookup::<5>::create(&normal, &part_x, &part_y, &part_z),
                                   Lookup::<6>::create(&normal, &part_x, &part_y, &part_z),
-                                  Lookup::<7>::create(&normal, &part_x, &part_y, &part_z),
-                                  Lookup::<8>::create(&normal, &part_x, &part_y, &part_z),
+                                  // Lookup::<7>::create(&normal, &part_x, &part_y, &part_z),
+                                  // Lookup::<8>::create(&normal, &part_x, &part_y, &part_z),
                                   // Lookup::<9>::create(&normal, &part_x, &part_y, &part_z),
                                   // Lookup::<10>::create(&normal, &part_x, &part_y, &part_z),
                                 );
@@ -171,7 +171,8 @@ fn main() {
     println!("{}: {}", i+1, smooth[i]);
   }
   println!();
-  println!("Amount of isomorphism classes: {}. Polynomials had Degree: {}", results.len(),  DEGREE);
+  println!("Amount of isomorphism classes: {}",results.len());
+  println!("Polynomials had Degree: {}",  DEGREE);
   println!("Total time: {:?}", start_time.elapsed());
 }
 
@@ -232,15 +233,15 @@ fn is_smooth(iso_polys: &Vec<IsoPolynomial>, start: usize, end: usize, super_lut
     count[5] += size as usize;
     points_on_curve[5] += result.unwrap();
 
-    let result = poly.has_singularity(&super_lut.6);
-    if result == None {continue;}
-    count[6] += size as usize;
-    points_on_curve[6] += result.unwrap();
+    // let result = poly.has_singularity(&super_lut.6);
+    // if result == None {continue;}
+    // count[6] += size as usize;
+    // points_on_curve[6] += result.unwrap();
 
-    let result = poly.has_singularity(&super_lut.7);
-    if result == None {continue;}
-    count[7] += size as usize;
-    points_on_curve[7] += result.unwrap();
+    // let result = poly.has_singularity(&super_lut.7);
+    // if result == None {continue;}
+    // count[7] += size as usize;
+    // points_on_curve[7] += result.unwrap();
 
     // let result = poly.has_singularity(&super_lut.8);
     // if result == None {continue;}
