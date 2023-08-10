@@ -101,7 +101,7 @@ impl IsoPolynomial {
 }
 
 
-pub fn generate_iso_polynomials(transform_lut: &Vec<Vec<u32>>, lut: &Vec<Term>, pgl3_f2: &Vec<Matrix>) -> Vec<IsoPolynomial>{
+pub fn generate_iso_polynomials(transform_lut: &Vec<Vec<u32>>) -> Vec<IsoPolynomial>{
   let mut things = vec![true; 1<<(DPLUS2_CHOOSE_2)];
 
   things[0] = false;
