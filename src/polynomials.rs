@@ -7,6 +7,12 @@ pub struct Polynomial {
   pub bits: u32
 }
 
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub enum Singularity{
+  Singular,
+  NonSingular,
+}
+
 impl Polynomial {
   pub fn new(bits: u32) -> Polynomial {
     Polynomial { bits: bits }
@@ -46,41 +52,45 @@ impl Polynomial {
     res
   }
 
-  pub fn has_singularity<const N: u8>(self, lookup: &Lookup<N>) -> Option<usize> {
-    let mut points_on_curve = 0;
-    for x in 0..(1<<N) {
-      for y in 0..2 {
-        let z = 0;
-        if x | y | z == 0 {
-          continue;
-        }
-        let index = generate_single_number::<N>(x, y, z);
-        if self.evaluate(index, &lookup.normal).is_zero() {
-          points_on_curve += 1;
-          if self.evaluate(index, &lookup.part_x).is_zero() {
-            if self.evaluate(index, &lookup.part_y).is_zero() {
-              if self.evaluate(index, &lookup.part_z).is_zero() {
-                return None
-              }
-            }
+
+  pub fn has_singularity_point<const N: u8>(self,x: u64, y: u64 ,z: u64,lookup: &Lookup<N>, count: &mut usize) -> Singularity {
+    let index = generate_single_number::<N>(x, y, z);
+    if self.evaluate(index, &lookup.normal).is_zero() {
+      *count += 1;
+      if self.evaluate(index, &lookup.part_x).is_zero() {
+        if self.evaluate(index, &lookup.part_y).is_zero() {
+          if self.evaluate(index, &lookup.part_z).is_zero() {
+            return Singularity::Singular
           }
-        
         }
       }
     }
+    Singularity::NonSingular
+  }
+
+  pub fn has_singularity<const N: u8>(self, lookup: &Lookup<N>) -> Option<usize> {
+    let mut points_on_curve = 0;
+
+    // (1,0,0)
+    if self.has_singularity_point(1,0,0,lookup, &mut points_on_curve) == Singularity::Singular {
+      return None
+    }
+    
+    // (x,1,0) 
+    for x in 0..(1<<N) {
+      let y = 1;
+      let z = 0;
+      if self.has_singularity_point(x,y,z,lookup, &mut points_on_curve) == Singularity::Singular {
+        return None
+      }
+    }
+    
+    // (x,y,1)
     for x in 0..(1<<N) {
       for y in 0..(1<<N) {
         let z = 1;
-        let index = generate_single_number::<N>(x, y, z);
-        if self.evaluate(index, &lookup.normal).is_zero() {
-          points_on_curve += 1;
-          if self.evaluate(index, &lookup.part_x).is_zero() {
-            if self.evaluate(index, &lookup.part_y).is_zero() {
-              if self.evaluate(index, &lookup.part_z).is_zero() {
-                return None
-              }
-            }
-          }
+        if self.has_singularity_point(x,y,z,lookup, &mut points_on_curve) == Singularity::Singular {
+          return None
         }
       }
     }
