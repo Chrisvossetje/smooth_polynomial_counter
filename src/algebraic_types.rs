@@ -140,16 +140,27 @@ impl Polynomial {
     Polynomial { bits: bits }
   }
 
-  #[allow(dead_code)]
-  pub fn print(self, lut: &Vec<Term>) {
+  pub fn str(&self, lut: &Vec<Term>) -> String {
+    let mut poly_str = String::new();
+    let mut empty = true;
     for i in 0..DPLUS2_CHOOSE_2 {
       if (self.bits >> i) & 1 == 1 {
         if lut[i].constant != 0 { 
-          print!("{} + ", lut[i].str())
+          if empty {
+            poly_str = format!("{}", lut[i].str());
+            empty = false;
+          } else {
+            poly_str = format!("{} + {}", poly_str, lut[i].str());
+          }
         }
       }
     }
-    println!()
+    poly_str
+  }
+
+  #[allow(dead_code)]
+  pub fn print(&self, lut: &Vec<Term>) {
+    println!("{}", self.str(lut));
   }
 
   pub fn evaluate<const N: u8>(self, index: u32, lut: &Vec<Vec<F2_i<N>>>) -> F2_i<N> {
@@ -163,27 +174,46 @@ impl Polynomial {
     res
   }
 
-  pub fn has_singularity<const N: u8>(self, lookup: &Lookup<N>) -> bool {
+  // Returns the number of points on the curve if it is smooth !
+  pub fn has_singularity<const N: u8>(self, lookup: &Lookup<N>) -> Option<usize> {
+    let mut points_on_curve = 0;
+    for x in 0..(1<<N) {
+      for y in 0..2 {
+        let z = 0;
+        if x | y | z == 0 {
+          continue;
+        }
+        let index = generate_single_number::<N>(x, y, z);
+        if self.evaluate(index, &lookup.normal).is_zero() {
+          points_on_curve += 1;
+          if self.evaluate(index, &lookup.part_x).is_zero() {
+            if self.evaluate(index, &lookup.part_y).is_zero() {
+              if self.evaluate(index, &lookup.part_z).is_zero() {
+                return None
+              }
+            }
+          }
+        
+        }
+      }
+    }
     for x in 0..(1<<N) {
       for y in 0..(1<<N) {
-        for z in 0..2 {
-          if x | y | z == 0 {
-            continue;
-          }
-          let index = generate_single_number::<N>(x, y, z);
-          if self.evaluate(index, &lookup.normal).is_zero() {
-            if self.evaluate(index, &lookup.part_x).is_zero() {
-              if self.evaluate(index, &lookup.part_y).is_zero() {
-                if self.evaluate(index, &lookup.part_z).is_zero() {
-                  return true
-                }
+        let z = 1;
+        let index = generate_single_number::<N>(x, y, z);
+        if self.evaluate(index, &lookup.normal).is_zero() {
+          points_on_curve += 1;
+          if self.evaluate(index, &lookup.part_x).is_zero() {
+            if self.evaluate(index, &lookup.part_y).is_zero() {
+              if self.evaluate(index, &lookup.part_z).is_zero() {
+                return None
               }
             }
           }
         }
       }
     }
-    false
+    Some(points_on_curve)
   }
 
   pub fn generate_default_lut() -> Vec<Term> {
