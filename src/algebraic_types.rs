@@ -33,6 +33,21 @@ impl Matrix {
       println!("");
     }
   }
+
+  pub fn generate_pgl3_f2() -> Vec<Matrix> {
+    let mut pgl3_f2: Vec<Matrix> = Vec::new();
+    for i in 0..(1<<9) {
+      let mut data: [[u8;3];3] = [[0;3];3];
+      for j in 0..9 {
+        data[j/3][j%3] = ((i >> j) & 1) as u8;
+      }
+      let matrix = Matrix::new(data);
+      if matrix.determinant() % 2 == 1 {
+        pgl3_f2.push(matrix);
+      }
+    }
+    pgl3_f2
+  }
 }
 
 
@@ -115,7 +130,6 @@ pub trait FieldTraits {
   fn zero() -> Self;
   fn mul_ntimes(self, n: u8) -> Self;
 }
-
 
 #[allow(non_camel_case_types)]
 #[derive(Debug, Copy, Clone, PartialEq)]
