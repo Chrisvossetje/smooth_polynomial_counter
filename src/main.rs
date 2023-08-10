@@ -2,7 +2,7 @@ use std::{time::Instant, sync::{mpsc, Arc, Mutex}, thread};
 
 use algebraic_types::{Polynomial, IsoPolynomial, Lookup};
 
-use crate::algebraic_types::generate_iso_polynomials;
+use crate::algebraic_types::{generate_iso_polynomials, Matrix};
 
 #[allow(non_snake_case)]
 mod algebraic_types;
@@ -24,6 +24,22 @@ struct CustomChunk {
 
 fn main() {
   let start_time = Instant::now();
+
+  // loop over all possible binary matrices
+  let mut pgl3_f2: Vec<Matrix> = vec![];
+  for i in 0..(1<<9) {
+    let mut data: [[u8;3];3] = [[0;3];3];
+    for j in 0..9 {
+      data[j/3][j%3] = ((i >> j) & 1) as u8;
+    }
+    let matrix = Matrix::new(data);
+    if matrix.determinant() % 2 == 1 {
+      pgl3_f2.push(matrix);
+    }
+  }
+
+  println!("Number of matrices: {}", pgl3_f2.len());
+
 
   println!("Generate lookup stuff");
   let normal = Polynomial::generate_default_lut();

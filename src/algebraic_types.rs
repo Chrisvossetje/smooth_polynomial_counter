@@ -5,6 +5,34 @@ use crate::DPLUS2_CHOOSE_2;
 use crate::DEGREE;
 
 
+pub struct Matrix {
+  pub data: [[u8;3];3]
+}
+
+impl Matrix {
+  pub fn determinant(&self) -> u8 {
+    self.data[0][0] * (self.data[1][1] * self.data[2][2] - self.data[1][2] * self.data[2][1]) 
+    - self.data[0][1] * (self.data[1][0] * self.data[2][2] - self.data[1][2] * self.data[2][0])
+    + self.data[0][2] * (self.data[1][0] * self.data[2][1] - self.data[1][1] * self.data[2][0])
+  }
+
+  pub fn new(data: [[u8;3];3]) -> Matrix 
+  {
+    Matrix { data: data }
+  }
+
+  #[allow(dead_code)]
+  pub fn print(&self) {
+    println!("Matrix, det: {}", self.determinant());
+    for i in 0..3 {
+      for j in 0..3 {
+        print!("{} ", self.data[i][j]);
+      }
+      println!("");
+    }
+  }
+}
+
 pub fn generate_single_number<const N: u8>(x: u64,y: u64,z: u64) -> u32 {
   ((x << (N+1))+ (y << 1) + z) as u32
 }
