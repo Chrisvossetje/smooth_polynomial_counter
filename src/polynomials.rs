@@ -211,7 +211,7 @@ impl Term {
     let p1 = exponentiate_linear_polynomial(matrix.data[0][0], matrix.data[0][1], matrix.data[0][2], self.x_deg);
     let p2 = exponentiate_linear_polynomial(matrix.data[1][0], matrix.data[1][1], matrix.data[1][2], self.y_deg);
     let p3 = exponentiate_linear_polynomial(matrix.data[2][0], matrix.data[2][1], matrix.data[2][2], self.z_deg);
-    let terms = polynomial_product(&polynomial_product(&p1, &p2),&p3);
+    let terms = polynomial_product(p1, p2, p3);
 
     let mut result = 0;
     for t in terms {
@@ -247,21 +247,17 @@ pub fn exponentiate_linear_polynomial(a: u8, b: u8, c: u8, m: u8) -> Vec<Term> {
   terms
 }
 
-pub fn polynomial_product(a: &Vec<Term>, b: &Vec<Term>) -> Vec<Term> {
+pub fn polynomial_product(a: Vec<Term>, b: Vec<Term>, c: Vec<Term>) -> Vec<Term> {
   let mut result: Vec<Term> = Vec::new();
-  for t1 in a {
-    for t2 in b {
-      let term = Term { x_deg: t1.x_deg + t2.x_deg, y_deg: t1.y_deg + t2.y_deg, z_deg: t1.z_deg + t2.z_deg, constant: (t1.constant * t2.constant ) % 2};
-      for (i,t) in result.iter().enumerate() {
-        if t.is_similar(term) {
-          let new_const = (t.constant + term.constant) % 2;
-          if new_const == 0 {
-            result.remove(i);
-          }
-          break;
-        }
+  for t1 in &a {
+    for t2 in &b {
+      for t3 in &c {
+        let term = Term { x_deg: t1.x_deg + t2.x_deg + t3.x_deg, 
+                          y_deg: t1.y_deg + t2.y_deg + t3.y_deg, 
+                          z_deg: t1.z_deg + t2.z_deg + t3.z_deg, 
+                          constant: (t1.constant * t2.constant * t3.constant) % 2};
+        result.push(term);
       }
-      result.push(term);
     }
   }
   result

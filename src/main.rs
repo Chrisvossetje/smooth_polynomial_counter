@@ -56,36 +56,6 @@ fn main() {
   let now2 = Instant::now();
   let transform_lut = generate_transform_lut(&pgl3_f2, &normal);
 
-  // for k in 0..(1<<3) {
-  //   let a = k & 1;
-  //   let b = (k >> 1) & 1;
-  //   let c = (k >> 2) & 1;
-  //   println!("{} {} {}", a, b, c);
-  //   for m in 2..=5 {
-  //     let terms = exponentiate_linear_polynomial(a, b, c, m);
-  //     for t in terms {
-  //       print!("{}  +  ", t.str());
-  //     }
-  //     println!()
-  //   }
-  //   println!()
-  // }
-
-  // let i = 5;
-  // let j = 8;
-
-  // let mat1 = pgl3_f2[i].clone();
-  // mat1.print();
-  // let term = normal[j].clone();
-  // println!("Term: {:?}", term);
-  // let poly1 = Polynomial::new(transform_lut[i][j]);
-  // let poly2 = Polynomial::new(term.transform_by_matrix(&mat1, &normal));
-
-  // poly1.print(&normal);
-  // poly2.print(&normal);
-
-  // return;
-
   let iso_polys = generate_iso_polynomials(&transform_lut, &normal, &pgl3_f2);
 
   println!("Generated {} isomorphic polynomials", iso_polys.len());
