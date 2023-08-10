@@ -1,11 +1,12 @@
 use std::{time::Instant, sync::{mpsc, Arc}, thread};
 
-use algebraic_types::{Polynomial, IsoPolynomial, Lookup};
+use algebraic_types::{IsoPolynomial, Lookup};
 
-use crate::algebraic_types::{generate_iso_polynomials, Matrix};
+use crate::{algebraic_types::{generate_iso_polynomials, Matrix}, polynomials::{Polynomial, generate_transform_lut, Term, exponentiate_linear_polynomial}};
 
 #[allow(non_snake_case)]
 mod algebraic_types;
+mod polynomials;
 
 const DEGREE: usize = 5;
 const DPLUS2_CHOOSE_2: usize = ((DEGREE+2) * (DEGREE+1)) / 2;
@@ -52,8 +53,55 @@ fn main() {
 
   
   println!("Generate isomorphic polynomials");
-  let iso_polys = generate_iso_polynomials(&normal);
-  
+  let now2 = Instant::now();
+  let transform_lut = generate_transform_lut(&pgl3_f2, &normal);
+
+  // for k in 0..(1<<3) {
+  //   let a = k & 1;
+  //   let b = (k >> 1) & 1;
+  //   let c = (k >> 2) & 1;
+  //   println!("{} {} {}", a, b, c);
+  //   for m in 2..=5 {
+  //     let terms = exponentiate_linear_polynomial(a, b, c, m);
+  //     for t in terms {
+  //       print!("{}  +  ", t.str());
+  //     }
+  //     println!()
+  //   }
+  //   println!()
+  // }
+
+  // let i = 5;
+  // let j = 8;
+
+  // let mat1 = pgl3_f2[i].clone();
+  // mat1.print();
+  // let term = normal[j].clone();
+  // println!("Term: {:?}", term);
+  // let poly1 = Polynomial::new(transform_lut[i][j]);
+  // let poly2 = Polynomial::new(term.transform_by_matrix(&mat1, &normal));
+
+  // poly1.print(&normal);
+  // poly2.print(&normal);
+
+  // return;
+
+  let iso_polys = generate_iso_polynomials(&transform_lut, &normal, &pgl3_f2);
+
+  println!("Generated {} isomorphic polynomials", iso_polys.len());
+  println!("Time: {:?}", now2.elapsed());
+
+
+  let f168 = pgl3_f2.len() as f32;
+  let mut sum: u32 = 0;
+  let mut freq: f32 = 0.;
+  for isopoly in &iso_polys {
+    let (_, size) = isopoly.deconstruct();
+    let aut = f168 / size as f32;
+    freq += aut;
+    sum += size;
+  }
+  println!("Frequency: {}, sum: {}", freq, sum);
   println!("Generate threads and start counting!");
 
   let chunk_size = (iso_polys.len() + NUM_THREADS - 1) / (NUM_THREADS);
