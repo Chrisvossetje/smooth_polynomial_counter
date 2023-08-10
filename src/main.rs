@@ -1,4 +1,4 @@
-use std::{time::Instant, sync::{mpsc, Arc}, thread};
+use std::{time::Instant, sync::{mpsc, Arc, Mutex}, thread};
 
 use algebraic_types::{Polynomial, IsoPolynomial, Lookup};
 
@@ -12,18 +12,25 @@ const DPLUS2_CHOOSE_2: usize = ((DEGREE+2) * (DEGREE+1)) / 2;
 
 const NUM_THREADS: usize = 16;
 
+const PRINTING: bool = false;
 
 type SuperType = (Lookup<1>,Lookup<2>,Lookup<3>,Lookup<4>,Lookup<5>,Lookup<6>,Lookup<7>,Lookup<8>);
 
+#[derive(Debug,Clone,Copy,PartialEq)]
+struct CustomChunk {
+  pub start: usize,
+  pub end: usize,
+}
 
 fn main() {
-  let now = Instant::now();
+  let start_time = Instant::now();
 
+  println!("Generate lookup stuff");
   let normal = Polynomial::generate_default_lut();
   let (part_x, part_y, part_z) = Polynomial::generate_derative_luts(&normal);
  
+  // Lookup Tables
   // CHANGE THIS: 
-  println!("Generate lookup stuff");
   let super_lookup: SuperType = ( Lookup::<1>::create(&normal, &part_x, &part_y, &part_z),
                                   Lookup::<2>::create(&normal, &part_x, &part_y, &part_z),
                                   Lookup::<3>::create(&normal, &part_x, &part_y, &part_z),
@@ -34,35 +41,78 @@ fn main() {
                                   Lookup::<8>::create(&normal, &part_x, &part_y, &part_z),
                                 );
 
-  
+  let lookup_time = Instant::now();
+  println!("Generating took: {:?}", (lookup_time-start_time));
+  println!();
+
+
+  // Polynomials
   println!("Generate isomorphic polynomials");
   let iso_polys = generate_iso_polynomials(&normal);
-  
-  println!("Generate threads and start counting!");
+  let poly_time = Instant::now();
+  println!("Generating took: {:?}", (poly_time-lookup_time));
+  println!();
 
-  let chunk_size = (iso_polys.len() + NUM_THREADS - 1) / (NUM_THREADS);
   
-  let arc_super_lookup = Arc::new(super_lookup);
-  let arc_iso_polys = Arc::new(iso_polys);
+  
+  println!("Generate chunks and start counting smooth polynomials!");
+  // let chunk_size = (iso_polys.len() + NUM_THREADS - 1) / (NUM_THREADS);
+  let chunk_size = 1024;
+  
+  // Chunk generation so threads get fed evenly
+  let mut chunks = Vec::new();
+  let mut start = 0;
+  while start < iso_polys.len() {
+    chunks.push(CustomChunk {
+        start,
+        end: std::cmp::min(start + chunk_size, iso_polys.len()), // end is exclusive
+    });
+    start += chunk_size;
+  }
+  let chunk_length = chunks.len();
 
+  println!("Amount of chunks: {} | Amount of threads: {}", chunks.len(), NUM_THREADS);
+  println!();
+                       
+  // Thread arc stuff
   let (tx, rx) = mpsc::channel();
 
-  for i in 0..NUM_THREADS {
+
+  let arc_super_lookup = Arc::new(super_lookup);
+  let arc_iso_polys = Arc::new(iso_polys);
+  let arc_chunks = Arc::new(Mutex::new(chunks));
+  
+  for _ in 0..NUM_THREADS {
     // Clone the sender to move into each thread
     let a_tx = tx.clone();
 
     // Clone the recomputed results to move into each thread locally
     let local_super_lookup = arc_super_lookup.clone();
-
     let local_iso_polys = arc_iso_polys.clone();
-
-    let start_index = i*chunk_size;
+    let local_chunks = arc_chunks.clone();
 
     // Spawn a new thread
     thread::spawn(move || {
-      let result =  
-        is_smooth(&local_iso_polys, start_index, chunk_size, &local_super_lookup);
-      a_tx.send(result).unwrap();      
+      // let lol = &local_chunks.lock().unwrap().pop();
+      loop {
+        let (start,end, index);
+        {
+          let chunk_vec = &mut local_chunks.lock().unwrap();
+          let chunk = chunk_vec.pop();
+          match chunk {
+            Some(t) => { start = t.start; end = t.end; index = chunk_vec.len()}
+            None => {return;}
+          }
+        }
+        if PRINTING {
+          println!("Chunks left: {index} | Total Chunks: {chunk_length} | Estimated time: {}", index as f64 * (Instant::now() - poly_time).as_secs_f64() / (chunk_length - index) as f64);
+        }
+
+        let result =  
+          is_smooth(&local_iso_polys, start, end, &local_super_lookup);
+        a_tx.send(result).unwrap();      
+      }
+
     });
   }
 
@@ -80,15 +130,15 @@ fn main() {
   }
   println!();
   println!("Degree: {}", DEGREE);
-  println!("Total time: {:?}", now.elapsed());
+  println!("Total time: {:?}", start_time.elapsed());
 }
 
 
 
-fn is_smooth(iso_polys: &Vec<IsoPolynomial>, start: usize, len: usize, super_lut: &SuperType) -> [usize; 10] {
+fn is_smooth(iso_polys: &Vec<IsoPolynomial>, start: usize, end: usize, super_lut: &SuperType) -> [usize; 10] {
   let mut count: [usize; 10] = [0; 10];
 
-  'outer: for i in start..(start+len) {
+  'outer: for i in start..end {
     if i >= iso_polys.len() {break;}
     let iso_poly = &iso_polys[i];
     let (poly, size) = iso_poly.deconstruct();
