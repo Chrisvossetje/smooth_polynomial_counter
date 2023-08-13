@@ -161,6 +161,15 @@ impl F3_i {
     (mul ^ xor) | one | two
   }
 
+  fn internal_add_fast(a: u64,b: u64) -> u64 {
+    const M2: u64 = 0xAAAA; 
+    let na=!a;
+    let nb=!b;
+    let a4= ((M2 & na) >> 1) & na;
+    let b4= ((M2 & nb) >> 1) & nb;
+    !((  (a4 << 1 | a4) | (b4 << 1 | b4))^(a|b))
+  }
+
   fn clmul(lhs: u64, rhs: u64, N: u8) -> u64 {
     let mut result = 0;
     for i in 0..N {
@@ -198,7 +207,7 @@ impl Add for F3_i {
   type Output = Self;
   
   fn add(self, rhs: Self) -> Self::Output {
-    F3_i {element: F3_i::internal_add(self.element as u64, rhs.element as u64) as u16, degree: self.degree}
+    F3_i {element: F3_i::internal_add_fast(self.element as u64, rhs.element as u64) as u16, degree: self.degree}
   }
 }
 
@@ -212,7 +221,7 @@ impl Mul for F3_i {
 
 impl AddAssign for F3_i {
   fn add_assign(&mut self, rhs: Self) {
-    self.element = F3_i::internal_add(self.element as u64, rhs.element as u64) as u16;
+    self.element = F3_i::internal_add_fast(self.element as u64, rhs.element as u64) as u16;
   }
 }
 
