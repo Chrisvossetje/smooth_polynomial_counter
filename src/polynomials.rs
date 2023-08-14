@@ -240,7 +240,7 @@ impl Term {
       for i in 0..DPLUS2_CHOOSE_2 {
         if lut[i].is_similar(t) {
           let bit = (t.constant as u64) << (i*2);
-          result = F3_i::internal_add(result, bit);
+          result = F3_i::<1>::internal_add(result, bit);
         }
       }
     }

@@ -160,7 +160,7 @@ impl PackedBool {
   }
 }
 
-pub fn generate_iso_polynomials(transform_lut: &Vec<Vec<u32>>) -> Vec<IsoPolynomial>{
+pub fn generate_iso_polynomials(transform_lut: &Vec<Vec<u64>>) -> Vec<IsoPolynomial>{
   let mut things = PackedBool::new(POLYNOMIALS);
 
   things.set(0, true);
