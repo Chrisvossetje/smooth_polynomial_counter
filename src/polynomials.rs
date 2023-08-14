@@ -55,8 +55,12 @@ impl Polynomial {
   pub fn evaluate_f3<const N: u8>(self, index: usize, lut: &Vec<Vec<F3_i<N>>>) -> F3_i<N> {
     let mut res = F3_i::ZERO;
     let index_lut = &lut[index];
-    for i in 0..DPLUS2_CHOOSE_2 { 
-      if (self.bits >> i) & 1 == 1 {// DO THIS BETTER, MATCH STATEMENT ON THE COEFFIECNTE STUFF
+    for i in 0..DPLUS2_CHOOSE_2 {
+      if (self.bits >> (2*i)) & 1 == 1 {
+        res += index_lut[i];
+      }
+      if self.bits >> (2*i) & 2 == 2 {
+        res += index_lut[i];
         res += index_lut[i];
       }
     }
