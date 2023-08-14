@@ -2,7 +2,7 @@ use std::{time::Instant, sync::{mpsc, Arc, Mutex}, thread, fs};
 
 use algebraic_types::{IsoPolynomial, Lookup, PolynomialResult};
 
-use crate::{algebraic_types::generate_iso_polynomials, polynomials::{Polynomial, generate_transform_lut}, algebraic_types::Matrix};
+use crate::{algebraic_types::generate_iso_polynomials, polynomials::{Polynomial, generate_transform_lut}, algebraic_types::Matrix, field_extensions::{F2_i, FieldTraits}};
 
 #[allow(non_snake_case)]
 #[allow(non_camel_case_types)]
@@ -22,7 +22,7 @@ const MAX_FIELD_EXT: usize = 6;
 
 const NUM_THREADS: usize = 16;
 const CHUNK_SIZE: usize = 50;
-const PRINTING: bool = true;
+const PRINTING: bool = false;
 
 const FILE_NAME: &str = "./output.txt";
 
@@ -45,7 +45,6 @@ fn main() {
   let pgl3_f2 = Matrix::generate_pgl3_f2();
   println!("Number of matrices: {}", pgl3_f2.len());
   println!();
-
 
   println!("Generate lookup stuff");
   let normal = Polynomial::generate_default_lut();

@@ -2,9 +2,43 @@ use std::ops::{Add, Mul, AddAssign, MulAssign};
 
 
 
-pub trait FieldTraits {
-  fn zero() -> Self;
+pub trait FieldTraits: Sized {
+  
+  const ZERO: Self;
+  const ONE: Self;
+  const MAX: Self;
+  // fn zero() -> Self;
+  // fn max() -> Self;
   fn mul_ntimes(self, n: u8) -> Self;
+  fn next(self) -> Option<Self>;
+
+  fn iterate_over_points() -> ProjectivePointIterator<Self> {
+    ProjectivePointIterator::new()
+  }
+}
+
+
+enum ProjectivePointPhase {
+  START,
+  Z_NULL,
+  Z_ONE,
+  FINISHED,
+}
+
+pub struct ProjectivePointIterator<T: FieldTraits> {
+  phase: ProjectivePointPhase,
+  x: T,
+  y: T,
+}
+
+impl<T: FieldTraits> ProjectivePointIterator<T> { 
+  pub fn new() -> ProjectivePointIterator<T>{
+    ProjectivePointIterator {
+        phase: ProjectivePointPhase::START,
+        x: T::ZERO,
+        y: T::ZERO,
+    }
+  }
 }
 
 #[allow(non_camel_case_types)]
@@ -12,19 +46,27 @@ pub trait FieldTraits {
 pub struct F2_i<const N: u8> {
   element: u16,
 }
-
 impl<const N: u8> FieldTraits for F2_i<N> {
-    fn zero() -> Self {
-      F2_i { element: 0}
+  const ZERO: Self = F2_i { element: 0};
+  const ONE: Self = F2_i { element: 1};
+  const MAX: Self =  F2_i {element: ((1<<N) - 1)};
+  
+  fn mul_ntimes(self, n: u8) -> Self {
+    let mut res = F2_i { element: 1};
+    for _ in 0..n {
+      res *= self;
     }
+    res
+  }
 
-    fn mul_ntimes(self, n: u8) -> Self {
-      let mut res = F2_i { element: 1};
-      for _ in 0..n {
-        res *= self;
-      }
-      res
+  fn next(self) -> Option<F2_i<N>> {
+    if self == F2_i::MAX {
+      None
+    } else {
+      Some(F2_i { element: {self.element + 1}})
     }
+  }
+
 }
 
 impl<const N: u8> F2_i<N> {
@@ -229,4 +271,45 @@ impl MulAssign for F3_i {
   fn mul_assign(&mut self, rhs: Self) {
     self.element = F3_i::internal_mul(self.element as u64, rhs.element as u64, self.degree as u8);
   }
+}
+
+// uint32_t t = ((a_n ^ 0xaaaaaaaa) | 0x55555555) >> 1;
+// return (a_n - t) & t;
+
+impl<T: FieldTraits + Copy> Iterator for ProjectivePointIterator<T> {
+    type Item = (T, T, T);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.phase {
+            ProjectivePointPhase::START => {self.phase = ProjectivePointPhase::Z_NULL;   Some((T::ONE, T::ZERO, T::ZERO))},
+            ProjectivePointPhase::Z_NULL => {
+                let number = (self.x, T::ONE, T::ZERO);
+                let result = self.x.next();
+                if let Some(res) = result {
+                  self.x = res;
+                } else {
+                  self.phase = ProjectivePointPhase::Z_ONE;
+                  self.x = T::ZERO;
+                }
+                Some(number)
+              } ,
+            ProjectivePointPhase::Z_ONE => {
+              let number = (self.x, self.y, T::ONE);
+              let x = self.x.next();
+              if let Some(x_res) = x {
+                self.x = x_res;
+              } else {
+                self.x = T::ZERO;
+                let y = self.y.next();
+                if let Some(y_res) = y {
+                  self.y = y_res;
+                } else {
+                  self.phase = ProjectivePointPhase::FINISHED;
+                }
+              }
+              Some(number)
+            },
+            ProjectivePointPhase::FINISHED => None,
+        }
+    }
 }

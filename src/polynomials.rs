@@ -41,9 +41,9 @@ impl Polynomial {
     println!("{}", self.str(lut));
   }
 
-  pub fn evaluate<const N: u8>(self, index: u32, lut: &Vec<Vec<F2_i<N>>>) -> F2_i<N> {
-    let mut res = F2_i::zero();
-    let index_lut = &lut[index as usize];
+  pub fn evaluate<const N: u8>(self, index: usize, lut: &Vec<Vec<F2_i<N>>>) -> F2_i<N> {
+    let mut res = F2_i::ZERO;
+    let index_lut = &lut[index];
     for i in 0..DPLUS2_CHOOSE_2 {
       if (self.bits >> i) & 1 == 1 {
         res += index_lut[i];
@@ -53,8 +53,8 @@ impl Polynomial {
   }
 
 
-  pub fn has_singularity_point<const N: u8>(self,x: u64, y: u64 ,z: u64,lookup: &Lookup<N>, count: &mut usize) -> Singularity {
-    let index = generate_single_number::<N>(x, y, z);
+  pub fn has_singularity_point<const N: u8>(self, index: usize,lookup: &Lookup<N>, count: &mut usize) -> Singularity {
+    // let index = generate_single_number::<N>(x, y, z);
     if self.evaluate(index, &lookup.normal).is_zero() {
       *count += 1;
       if self.evaluate(index, &lookup.part_x).is_zero() {
@@ -71,29 +71,32 @@ impl Polynomial {
   pub fn has_singularity<const N: u8>(self, lookup: &Lookup<N>) -> Option<usize> {
     let mut points_on_curve = 0;
 
-    // (1,0,0)
-    if self.has_singularity_point(1,0,0,lookup, &mut points_on_curve) == Singularity::Singular {
-      return None
-    }
-    
-    // (x,1,0) 
-    for x in 0..(1<<N) {
-      let y = 1;
-      let z = 0;
-      if self.has_singularity_point(x,y,z,lookup, &mut points_on_curve) == Singularity::Singular {
+    for (index, _) in F2_i::<N>::iterate_over_points().enumerate() {
+      if self.has_singularity_point(index,lookup, &mut points_on_curve) == Singularity::Singular {
         return None
       }
     }
+
+    // // (1,0,0)
     
-    // (x,y,1)
-    for x in 0..(1<<N) {
-      for y in 0..(1<<N) {
-        let z = 1;
-        if self.has_singularity_point(x,y,z,lookup, &mut points_on_curve) == Singularity::Singular {
-          return None
-        }
-      }
-    }
+    // // (x,1,0) 
+    // for x in 0..(1<<N) {
+    //   let y = 1;
+    //   let z = 0;
+    //   if self.has_singularity_point(x,y,z,lookup, &mut points_on_curve) == Singularity::Singular {
+    //     return None
+    //   }
+    // }
+    
+    // // (x,y,1)
+    // for x in 0..(1<<N) {
+    //   for y in 0..(1<<N) {
+    //     let z = 1;
+    //     if self.has_singularity_point(x,y,z,lookup, &mut points_on_curve) == Singularity::Singular {
+    //       return None
+    //     }
+    //   }
+    // }
     Some(points_on_curve)
   }
 
@@ -157,7 +160,7 @@ impl Term {
 
   pub fn evaluate<const N: u8>(self, x: F2_i<N>, y: F2_i<N>, z: F2_i<N>) -> F2_i<N> {
     if self.constant == 0 {
-      F2_i::zero()
+      F2_i::ZERO
     } else {
       x.mul_ntimes(self.x_deg) * y.mul_ntimes(self.y_deg) * z.mul_ntimes(self.z_deg)
     }
@@ -197,16 +200,9 @@ impl Term {
 
   pub fn generate_precalculated_points<const N: u8>(self) -> Vec<F2_i<N>> {
     let mut results = Vec::new();
-    for x in 0..(1<<N) {
-      for y in 0..(1<<N) {
-        for z in 0..2 {
-          let p_x = F2_i::new(x);
-          let p_y = F2_i::new(y);
-          let p_z = F2_i::new(z);
-          let result = self.evaluate(p_x, p_y, p_z);
-          results.push(result);
-        }
-      }
+    for (x,y,z) in F2_i::iterate_over_points() {
+      let result = self.evaluate(x, y, z);
+      results.push(result);
     }
     results
   }
