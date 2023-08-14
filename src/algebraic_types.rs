@@ -29,10 +29,10 @@ pub struct Matrix {
 }
 
 impl Matrix {
-  pub fn determinant(&self) -> u8 {
-    ((self.data[0][0] as i32 * ((self.data[1][1] * self.data[2][2]) as i32 - (self.data[1][2] * self.data[2][1]) as i32) ) as i32 -
+  pub fn determinant(&self) -> i32 {
+    (self.data[0][0] as i32 * ((self.data[1][1] * self.data[2][2]) as i32 - (self.data[1][2] * self.data[2][1]) as i32) ) as i32 -
     (self.data[0][1] as i32 * ((self.data[1][0] * self.data[2][2]) as i32 - (self.data[1][2] * self.data[2][0]) as i32)) as i32 +
-    (self.data[0][2] as i32 * ((self.data[1][0] * self.data[2][1]) as i32 -( self.data[1][1] * self.data[2][0]) as i32)) as i32) as u8
+    (self.data[0][2] as i32 * ((self.data[1][0] * self.data[2][1]) as i32 -( self.data[1][1] * self.data[2][0]) as i32)) as i32
   }
 
   pub fn new(data: [[u8;3];3]) -> Matrix 
@@ -59,14 +59,38 @@ impl Matrix {
         data[j/3][j%3] = ((i >> j) & 1) as u8;
       }
       let matrix = Matrix::new(data);
-      if matrix.determinant() % 2 == 1 {
+      if matrix.determinant() % 2 != 0 {
         pgl3_f2.push(matrix);
       }
     }
     pgl3_f2
   }
-}
 
+  fn get_ternary_digit(digit: u64, bit_index: usize) -> u64 {
+    const DIGIT_LOOKUP: [u64;9]= [1, 3, 9, 27, 81, 243, 729, 2187, 6561];
+    let div = digit / DIGIT_LOOKUP[bit_index];
+    div % 3 
+  }
+
+  pub fn generate_gl3_f3() -> Vec<Matrix> {
+    let mut gl3_f3: Vec<Matrix> = Vec::new();
+    for i in 0..19683 {
+      let mut data: [[u8;3];3] = [[0;3];3];
+      for j in 0..9 {
+        data[j/3][j%3] = Matrix::get_ternary_digit(i, j) as u8;
+      }
+      let matrix = Matrix::new(data);
+      if i == 728 {
+        println!("");
+      }
+
+      if matrix.determinant() % 3 != 0 {
+        gl3_f3.push(matrix);
+      }
+    }
+    gl3_f3
+  }
+}
 
 pub struct Lookup <const N: u8> {
   pub normal: Vec<Vec<F2_i<N>>>,

@@ -21,7 +21,7 @@ const MAX_FIELD_EXT: usize = 6;
 
 
 const NUM_THREADS: usize = 16;
-const CHUNK_SIZE: usize = 1024;
+const CHUNK_SIZE: usize = 50;
 const PRINTING: bool = true;
 
 const FILE_NAME: &str = "./output.txt";
@@ -40,7 +40,7 @@ struct CustomChunk {
 fn main() {
   let start_time = Instant::now();
 
-  // loop over all possible binary matrices
+  // Matrices
   println!("Generate matrices");
   let pgl3_f2 = Matrix::generate_pgl3_f2();
   println!("Number of matrices: {}", pgl3_f2.len());
