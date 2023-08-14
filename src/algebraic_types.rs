@@ -125,7 +125,7 @@ impl IsoPolynomial {
 }
 
 
-pub fn generate_iso_polynomials(transform_lut: &Vec<Vec<u32>>) -> Vec<IsoPolynomial>{
+pub fn generate_iso_polynomials(transform_lut: &Vec<Vec<u64>>) -> Vec<IsoPolynomial>{
   let mut things = vec![true; 1<<(DPLUS2_CHOOSE_2)];
 
   things[0] = false;
@@ -135,7 +135,7 @@ pub fn generate_iso_polynomials(transform_lut: &Vec<Vec<u32>>) -> Vec<IsoPolynom
   for i in 1..1<<(DPLUS2_CHOOSE_2) {
     if things[i] {
       things[i] = false;
-      let poly = Polynomial::new(i as u32);
+      let poly = Polynomial::new(i as u64);
       let mut count = 1;
       let mut smallest_poly = poly;
       for i in 0..transform_lut.len() { // loop over matrices

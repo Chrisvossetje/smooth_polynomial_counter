@@ -1,10 +1,10 @@
 
-use crate::{DPLUS2_CHOOSE_2, algebraic_types::{Lookup, Matrix}, DEGREE, field_extensions::{F2_i, FieldTraits}, FIELD_SIZE};
+use crate::{DPLUS2_CHOOSE_2, algebraic_types::{Lookup, Matrix}, DEGREE, field_extensions::{F2_i, FieldTraits, F3_i}, FIELD_SIZE};
 
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Polynomial {
-  pub bits: u32
+  pub bits: u64
 }
 
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -14,7 +14,7 @@ pub enum Singularity{
 }
 
 impl Polynomial {
-  pub fn new(bits: u32) -> Polynomial {
+  pub fn new(bits: u64) -> Polynomial {
     Polynomial { bits: bits }
   }
 
@@ -131,7 +131,7 @@ impl Polynomial {
     (lut_x, lut_y, lut_z)
   }
 
-  pub fn transform_by_matrix(self, transform_lut: &Vec<u32>) -> Polynomial {
+  pub fn transform_by_matrix(self, transform_lut: &Vec<u64>) -> Polynomial {
     let mut bits = 0;
     for i in 0..DPLUS2_CHOOSE_2 {
       if ((self.bits >> i) & 1) == 1 {
@@ -215,7 +215,7 @@ impl Term {
     transpose(resultant_terms)
   }
 
-  pub fn transform_by_matrix(self, matrix: &Matrix, lut: &Vec<Term>) -> u32 {
+  pub fn transform_by_matrix(self, matrix: &Matrix, lut: &Vec<Term>) -> u64 {
     if self.constant == 0 {
       return 0;
     }
@@ -227,8 +227,9 @@ impl Term {
     let mut result = 0;
     for t in terms {
       for i in 0..DPLUS2_CHOOSE_2 {
-        if lut[i] == t {
-          result ^= 1 << i;
+        if lut[i].is_similar(t) {
+          let bit = (t.constant as u64) << (i*2);
+          result = F3_i::internal_add(result, bit);
         }
       }
     }
@@ -247,8 +248,8 @@ pub fn exponentiate_linear_polynomial(a: u8, b: u8, c: u8, m: u8) -> Vec<Term> {
   for k1 in 0..=m {
     for k2 in 0..=(m-k1) {
       let k3 = m-k1-k2;
-      let coeff = binomial_coefficient(m, k1, k2, k3);
-      if (coeff % FIELD_SIZE as u8 == 0)|| (k1>0 && a==0) || (k2>0 && b==0) || (k3>0 && c==0) {
+      let coeff = binomial_coefficient(m, k1, k2, k3) % FIELD_SIZE as u8;
+      if (coeff == 0)|| (k1>0 && a==0) || (k2>0 && b==0) || (k3>0 && c==0) {
         continue;
       }
       let term = Term { x_deg: k1, y_deg: k2, z_deg: k3, constant: coeff };
@@ -304,7 +305,7 @@ fn transpose<T>(v: Vec<Vec<T>>) -> Vec<Vec<T>> {
     .collect()
 }
 
-pub fn generate_transform_lut(pgl3: &Vec<Matrix>, lut: &Vec<Term>) -> Vec<Vec<u32>> {
+pub fn generate_transform_lut(pgl3: &Vec<Matrix>, lut: &Vec<Term>) -> Vec<Vec<u64>> {
   let mut result = vec![];
   for m in pgl3 {
     let mut result_for_m = vec![];
