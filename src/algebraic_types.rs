@@ -75,8 +75,8 @@ impl Matrix {
     div % 3 
   }
 
-  pub fn generate_gl3_f3() -> Vec<Matrix> {
-    let mut gl3_f3: Vec<Matrix> = Vec::new();
+  pub fn generate_pgl3_f3() -> Vec<Matrix> {
+    let mut pgl3_f3: Vec<Matrix> = Vec::new();
     for i in 0..19683 {
       let mut data: [[u8;3];3] = [[0;3];3];
       for j in 0..9 {
@@ -87,11 +87,11 @@ impl Matrix {
         println!("");
       }
 
-      if matrix.determinant() % 3 != 0 {
-        gl3_f3.push(matrix);
+      if matrix.determinant() % 3 == 1 || matrix.determinant() % 3 == -2 {
+        pgl3_f3.push(matrix);
       }
     }
-    gl3_f3
+    pgl3_f3
   }
 }
 
@@ -170,7 +170,7 @@ pub fn generate_iso_polynomials(transform_lut: &Vec<Vec<u32>>) -> Vec<IsoPolynom
   for i in 1..1<<(DPLUS2_CHOOSE_2) {
     if things.get(i) == false {
       things.set(i, true);
-      let poly = Polynomial::new(i as u32);
+      let poly = Polynomial::new(i as u64);
       let mut count = 1;
       let mut smallest_poly = poly;
       for i in 0..transform_lut.len() { // loop over matrices

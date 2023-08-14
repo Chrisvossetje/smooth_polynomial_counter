@@ -200,7 +200,7 @@ impl<const N: u8> F3_i<N> {
     println!(" ({})", N);
   }
 
-  fn internal_add(a: u64, b: u64) -> u64 {
+  pub fn internal_add(a: u64, b: u64) -> u64 {
     const M1: u64 = 0x5555;
     const M2: u64 = 0xAAAA;
 
