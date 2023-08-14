@@ -48,7 +48,7 @@ impl<const N: u8> F2_i<N> {
 
   
   fn internal_mul(lhs: u64, rhs: u64) -> u16 {
-    const IRRED_PART: [u64; 11] = [0, 1, 0b11,0b11,0b11, 0b101, 0b11, 0b11, 0b11001, 0b11, 0b1001];
+    const IRRED_PART: [u64; 11] = [0, 1, 0b11,0b11,0b11, 0b101, 0b11, 0b11, 0b11011, 0b11, 0b1001];
     let bitmask: u64 = !((!0) << N);
     let value = IRRED_PART[N as usize];
 
