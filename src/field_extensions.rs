@@ -90,6 +90,11 @@ impl<const N: u8> F2_i<N> {
 
   
   fn internal_mul(lhs: u64, rhs: u64) -> u16 {
+    // Irred polys with lowest lexographical ordering according to:
+    // Handbook of finite fields (Page 33, Table 2.2.1)
+    // http://archive.ymsc.tsinghua.edu.cn/pacm_download/672/12637-dingjt-p2.pdf
+    // 2,1 | 3,1 | 4,1 | 5,2 | 6,1 | 7,1 | 8,4,3,1 | 9,1
+    // 10,3 | 11,2 | 12,3 | 13,4,3,1 | 14,5 | 15,1 | 16,5,3,1 | 17,3
     const IRRED_PART: [u64; 11] = [0, 1, 0b11,0b11,0b11, 0b101, 0b11, 0b11, 0b11011, 0b11, 0b1001];
     let bitmask: u64 = !((!0) << N);
     let value = IRRED_PART[N as usize];
@@ -228,6 +233,9 @@ impl F3_i {
   // We first convert the polynomials to vectors with coefficients in Z/3Z
   // Then we multiply them and reduce the result
   fn internal_mul(a: u64, b: u64, N: u8) -> u16 {
+    // Irred polys with lowest lexographical ordering according to:
+    // Handbook of finite fields (Page 36, Table 2.2.3)
+    // http://archive.ymsc.tsinghua.edu.cn/pacm_download/672/12637-dingjt-p2.pdf 
     const IRRED_POLY: [u64; 7] = [0b0000, 0b0001, 0b0010, 0b0110,0b1001, 0b0110, 0b1001];
 
     let bitmask: u64 = !((!0) << 2*N);
