@@ -56,7 +56,11 @@ impl Polynomial {
     let mut res = F3_i::ZERO;
     let index_lut = &lut[index];
     for i in 0..DPLUS2_CHOOSE_2 {
-      if (self.bits >> i) & 1 == 1 {
+      if (self.bits >> (2*i)) & 1 == 1 {
+        res += index_lut[i];
+      }
+      if self.bits >> (2*i) & 2 == 2 {
+        res += index_lut[i];
         res += index_lut[i];
       }
     }
