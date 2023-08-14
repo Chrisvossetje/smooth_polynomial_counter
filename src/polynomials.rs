@@ -41,11 +41,11 @@ impl Polynomial {
     println!("{}", self.str(lut));
   }
 
-  pub fn evaluate<const N: u8>(self, index: usize, lut: &Vec<Vec<F2_i<N>>>) -> F2_i<N> {
+  pub fn evaluate_f2<const N: u8>(self, index: usize, lut: &Vec<Vec<F2_i<N>>>) -> F2_i<N> {
     let mut res = F2_i::ZERO;
     let index_lut = &lut[index];
     for i in 0..DPLUS2_CHOOSE_2 {
-      if (self.bits >> i) & 1 == 1 {
+      if (self.bits >> 2*i) & 1 == 1 {
         res += index_lut[i];
       }
     }
@@ -55,8 +55,8 @@ impl Polynomial {
   pub fn evaluate_f3<const N: u8>(self, index: usize, lut: &Vec<Vec<F3_i<N>>>) -> F3_i<N> {
     let mut res = F3_i::ZERO;
     let index_lut = &lut[index];
-    for i in 0..DPLUS2_CHOOSE_2 {
-      if (self.bits >> i) & 1 == 1 {
+    for i in 0..DPLUS2_CHOOSE_2 { 
+      if (self.bits >> i) & 1 == 1 {// DO THIS BETTER, MATCH STATEMENT ON THE COEFFIECNTE STUFF
         res += index_lut[i];
       }
     }
@@ -65,12 +65,11 @@ impl Polynomial {
 
 
   pub fn has_singularity_point<const N: u8>(self, index: usize,lookup: &Lookup<N>, count: &mut usize) -> Singularity {
-    // let index = generate_single_number::<N>(x, y, z);
-    if self.evaluate(index, &lookup.normal).is_zero() {
+    if self.evaluate_f3(index, &lookup.normal) == F3_i::ZERO {
       *count += 1;
-      if self.evaluate(index, &lookup.part_x).is_zero() {
-        if self.evaluate(index, &lookup.part_y).is_zero() {
-          if self.evaluate(index, &lookup.part_z).is_zero() {
+      if self.evaluate_f3(index, &lookup.part_x) == F3_i::ZERO {
+        if self.evaluate_f3(index, &lookup.part_y) == F3_i::ZERO {
+          if self.evaluate_f3(index, &lookup.part_z) == F3_i::ZERO {
             return Singularity::Singular
           }
         }
@@ -169,9 +168,17 @@ impl Term {
     Term { x_deg: 0, y_deg: 0, z_deg: 0, constant: 0 }
   }
 
-  pub fn evaluate<const N: u8>(self, x: F2_i<N>, y: F2_i<N>, z: F2_i<N>) -> F2_i<N> {
+  pub fn evaluate_f2<const N: u8>(self, x: F2_i<N>, y: F2_i<N>, z: F2_i<N>) -> F2_i<N> {
     if self.constant == 0 {
       F2_i::ZERO
+    } else {
+      x.mul_ntimes(self.x_deg) * y.mul_ntimes(self.y_deg) * z.mul_ntimes(self.z_deg)
+    }
+  }
+
+  pub fn evaluate_f3<const N: u8>(self, x: F3_i<N>, y: F3_i<N>, z: F3_i<N>) -> F3_i<N> {
+    if self.constant == 0 {
+      F3_i::ZERO
     } else {
       x.mul_ntimes(self.x_deg) * y.mul_ntimes(self.y_deg) * z.mul_ntimes(self.z_deg)
     }
@@ -209,16 +216,16 @@ impl Term {
     (term_x, term_y, term_z)
   }
 
-  pub fn generate_precalculated_points<const N: u8>(self) -> Vec<F2_i<N>> {
+  pub fn generate_precalculated_points<const N: u8>(self) -> Vec<F3_i<N>> {
     let mut results = Vec::new();
-    for (x,y,z) in F2_i::iterate_over_points() {
-      let result = self.evaluate(x, y, z);
+    for (x,y,z) in F3_i::iterate_over_points() {
+      let result = self.evaluate_f3(x, y, z);
       results.push(result);
     }
     results
   }
 
-  pub fn generate_points_for_multiple<const N: u8>(terms: &Vec<Term>) -> Vec<Vec<F2_i<N>>> {
+  pub fn generate_points_for_multiple<const N: u8>(terms: &Vec<Term>) -> Vec<Vec<F3_i<N>>> {
     let mut resultant_terms = Vec::new();
     for t in terms {
       resultant_terms.push(t.generate_precalculated_points());
@@ -296,10 +303,6 @@ pub fn factorial(n: u8) -> u64 {
     result *= i;
   }
   result
-}
-
-pub fn generate_single_number<const N: u8>(x: u64,y: u64,z: u64) -> u32 {
-  ((x << (N+1))+ (y << 1) + z) as u32
 }
   
 fn transpose<T>(v: Vec<Vec<T>>) -> Vec<Vec<T>> {

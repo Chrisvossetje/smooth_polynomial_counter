@@ -1,4 +1,4 @@
-use std::ops::{Add, Mul, AddAssign, MulAssign};
+use std::{ops::{Add, Mul, AddAssign, MulAssign}, num::Wrapping};
 
 
 
@@ -175,7 +175,8 @@ impl<const N: u8> FieldTraits for F3_i<N> {
         None 
       } else {
         let t = ((self.element ^ 0xaa) | 0x55) >> 1;
-        Some(F3_i {element: (self.element - t) & t})
+        let el = (Wrapping(self.element) - Wrapping(t)).0 & t;
+        Some(F3_i {element: el as u16})
       }
     }
 }

@@ -6,6 +6,7 @@ use crate::DPLUS2_CHOOSE_2;
 use crate::MAX_FIELD_EXT;
 use crate::POLYNOMIALS;
 use crate::field_extensions::F2_i;
+use crate::field_extensions::F3_i;
 use crate::polynomials::{Term, Polynomial};
 
 
@@ -96,10 +97,10 @@ impl Matrix {
 }
 
 pub struct Lookup <const N: u8> {
-  pub normal: Vec<Vec<F2_i<N>>>,
-  pub part_x: Vec<Vec<F2_i<N>>>,
-  pub part_y: Vec<Vec<F2_i<N>>>,
-  pub part_z: Vec<Vec<F2_i<N>>>,
+  pub normal: Vec<Vec<F3_i<N>>>,
+  pub part_x: Vec<Vec<F3_i<N>>>,
+  pub part_y: Vec<Vec<F3_i<N>>>,
+  pub part_z: Vec<Vec<F3_i<N>>>,
 } 
 
 impl<const N: u8> Lookup<N> {
@@ -150,7 +151,6 @@ impl PackedBool {
   }
   
   pub fn set(&mut self, index: usize, value: bool) {
-  
     let partial = self.data[index / 8];
     if value {
       self.data[index / 8] = partial | (1 << index % 8)
@@ -160,24 +160,44 @@ impl PackedBool {
   }
 }
 
+fn f3_bijection_inverse(index: u64) -> u64 {
+  // const DIGIT_LOOKUP: [u64;16]= [1, 3, 9, 27, 81, 243, 729, 2187, 6561,19683,59049,177147,531441,1594323,4782969,14348907];
+  let mut mult = 1;
+  let mut res = 0;
+  for i in 0..32 {
+    res += mult * ((index >> 2*i) % 3); 
+    mult *= 3;
+  }
+  res
+}
+
+fn f3_bijection(mut index: u64) -> u64 {
+  let mut res = 0;
+  for i in 0..32 {
+    res += (index % 3) << 2*i; 
+    index /= 3;
+  }
+  res
+}
+
 pub fn generate_iso_polynomials(transform_lut: &Vec<Vec<u64>>) -> Vec<IsoPolynomial>{
-  let mut things = PackedBool::new(POLYNOMIALS);
+  let mut things = PackedBool::new(POLYNOMIALS + 8);
 
   things.set(0, true);
 
   let mut iso_polys = Vec::new();
 
-  for i in 1..1<<(DPLUS2_CHOOSE_2) {
+  for i in 1..POLYNOMIALS/1000 {
     if things.get(i) == false {
       things.set(i, true);
-      let poly = Polynomial::new(i as u64);
+      let poly = Polynomial::new(f3_bijection(i as u64));
       let mut count = 1;
       let mut smallest_poly = poly;
       for i in 0..transform_lut.len() { // loop over matrices
         let perm_poly = poly.transform_by_matrix(&transform_lut[i]);
-        if things.get(perm_poly.bits as usize) == false {
+        if things.get(f3_bijection_inverse(perm_poly.bits) as usize) == false {
           count += 1;
-          things.set(perm_poly.bits as usize, true);
+          things.set(f3_bijection_inverse(perm_poly.bits) as usize, true);
           if perm_poly.bits.count_ones() < smallest_poly.bits.count_ones() {
             smallest_poly = perm_poly;
           }
