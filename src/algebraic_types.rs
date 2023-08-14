@@ -1,7 +1,10 @@
+use std::ops::Index;
+use std::ops::IndexMut;
 use std::vec;
 
 use crate::DPLUS2_CHOOSE_2;
 use crate::MAX_FIELD_EXT;
+use crate::POLYNOMIALS;
 use crate::field_extensions::F2_i;
 use crate::polynomials::{Term, Polynomial};
 
@@ -125,24 +128,56 @@ impl IsoPolynomial {
 }
 
 
-pub fn generate_iso_polynomials(transform_lut: &Vec<Vec<u32>>) -> Vec<IsoPolynomial>{
-  let mut things = vec![true; 1<<(DPLUS2_CHOOSE_2)];
+#[derive(Debug,Clone)]
+pub struct PackedBool {
+  pub data: Vec<u8>,
+}
 
-  things[0] = false;
+impl PackedBool {
+  pub fn new(size: usize) -> PackedBool {
+    let mut pack = PackedBool {
+      data: Vec::with_capacity(size/8)
+    };
+    for _ in 0..(size/8) {
+        pack.data.push(0);
+    }
+    pack
+  }
+
+  pub fn get(&self, index: usize) -> bool {
+    let partial = self.data[index / 8];
+    partial >> (index % 8) & 1 == 1
+  }
+  
+  pub fn set(&mut self, index: usize, value: bool) {
+  
+    let partial = self.data[index / 8];
+    if value {
+      self.data[index / 8] = partial | (1 << index % 8)
+    } else {      
+      self.data[index / 8] = partial & (0xFF ^ (1 << index % 8))
+    }
+  }
+}
+
+pub fn generate_iso_polynomials(transform_lut: &Vec<Vec<u32>>) -> Vec<IsoPolynomial>{
+  let mut things = PackedBool::new(POLYNOMIALS);
+
+  things.set(0, true);
 
   let mut iso_polys = Vec::new();
 
   for i in 1..1<<(DPLUS2_CHOOSE_2) {
-    if things[i] {
-      things[i] = false;
+    if things.get(i) == false {
+      things.set(i, true);
       let poly = Polynomial::new(i as u32);
       let mut count = 1;
       let mut smallest_poly = poly;
       for i in 0..transform_lut.len() { // loop over matrices
         let perm_poly = poly.transform_by_matrix(&transform_lut[i]);
-        if things[perm_poly.bits as usize] {
+        if things.get(perm_poly.bits as usize) == false {
           count += 1;
-          things[perm_poly.bits as usize] = false;
+          things.set(perm_poly.bits as usize, true);
           if perm_poly.bits.count_ones() < smallest_poly.bits.count_ones() {
             smallest_poly = perm_poly;
           }

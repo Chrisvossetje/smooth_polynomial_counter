@@ -15,9 +15,16 @@ mod polynomials;
 mod field_extensions;
 
 const DEGREE: usize = 5;
+const FIELD_SIZE: usize = 3;
+
+
+const FIELD_EXT_LUT: [usize; 7] = [1,1,2,3,4,6,10];
+const MAX_FIELD_EXT: usize = FIELD_EXT_LUT[DEGREE];
+
+// Q^21 - 1 / 2
+const POLYNOMIALS: usize = (FIELD_SIZE.pow(21) - 1) / 2;
 const DPLUS2_CHOOSE_2: usize = ((DEGREE+2) * (DEGREE+1)) / 2;
 
-const MAX_FIELD_EXT: usize = 6;
 
 
 const NUM_THREADS: usize = 16;

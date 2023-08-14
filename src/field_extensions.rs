@@ -2,14 +2,21 @@ use std::ops::{Add, Mul, AddAssign, MulAssign};
 
 
 
-pub trait FieldTraits: Sized {
+pub trait FieldTraits: Sized + MulAssign + Copy {
   
   const ZERO: Self;
   const ONE: Self;
   const MAX: Self;
   // fn zero() -> Self;
   // fn max() -> Self;
-  fn mul_ntimes(self, n: u8) -> Self;
+  fn mul_ntimes(self, n: u8) -> Self {
+    let mut res = Self::ONE;
+    for _ in 0..n {
+      res *= self;
+    }
+    res
+  }
+
   fn next(self) -> Option<Self>;
 
   fn iterate_over_points() -> ProjectivePointIterator<Self> {
@@ -51,13 +58,6 @@ impl<const N: u8> FieldTraits for F2_i<N> {
   const ONE: Self = F2_i { element: 1};
   const MAX: Self =  F2_i {element: ((1<<N) - 1)};
   
-  fn mul_ntimes(self, n: u8) -> Self {
-    let mut res = F2_i { element: 1};
-    for _ in 0..n {
-      res *= self;
-    }
-    res
-  }
 
   fn next(self) -> Option<F2_i<N>> {
     if self == F2_i::MAX {
@@ -160,29 +160,44 @@ impl<const N: u8> MulAssign for F2_i<N> {
 // A polynomial over the field over 3 elements, represented in bits
 // Each coefficient is represented by 2 bits, so the can be at most 16
 #[allow(non_camel_case_types)]
-pub struct F3_i {
+#[derive(Debug,Clone,Copy,PartialEq)]
+pub struct F3_i<const N: u8> {
   pub element: u16,
-  pub degree: u32,
 }
 
-impl F3_i {
+impl<const N: u8> FieldTraits for F3_i<N> {
+    const ZERO: F3_i<N> = F3_i {element: 0b0 };
+    const ONE: F3_i<N> = F3_i {element: 0b1 };
+    const MAX: F3_i<N> = F3_i {element: 0xAA & !((!0)<< (2*N))} ; // DON'T 
+
+    fn next(self) -> Option<Self> {
+      if self == Self::MAX {
+        None 
+      } else {
+        let t = ((self.element ^ 0xaa) | 0x55) >> 1;
+        Some(F3_i {element: (self.element - t) & t})
+      }
+    }
+}
+
+impl<const N: u8> F3_i<N> {
   #[allow(dead_code)]
-  pub fn new(element: u16, degree: u32) -> F3_i {
-    F3_i { element: element, degree: degree }
+  pub fn new(element: u16) -> F3_i<N> {
+    F3_i { element: element }
   }
   
   // print each coefficient as a number
   #[allow(dead_code)]
   pub fn print(&self) {
-    for j in 0..self.degree {
-      let i = self.degree - j - 1;
+    for j in 0..N {
+      let i = N - j - 1;
       let num = (self.element >> (2 * i)) & 0b11;
       if num >= 3 {
         panic!("Invalid number: {}, deg: {}", num, i);
       }
       print!("{}", (self.element >> (2 * i)) & 0b11);
     }
-    println!(" ({})", self.degree);
+    println!(" ({})", N);
   }
 
   fn internal_add(a: u64, b: u64) -> u64 {
@@ -212,13 +227,13 @@ impl F3_i {
     !((  (a4 << 1 | a4) | (b4 << 1 | b4))^(a|b))
   }
 
-  fn clmul(lhs: u64, rhs: u64, N: u8) -> u64 {
+  fn clmul(lhs: u64, rhs: u64) -> u64 {
     let mut result = 0;
     for i in 0..N {
       let factor = (lhs >> (2*i)) & 0b11;
       match factor {
-          2 => {result = F3_i::internal_add(result, rhs << 2*i); result = F3_i::internal_add(result, rhs << 2*i);}
-          1 => {result = F3_i::internal_add(result, rhs << 2*i);}
+          2 => {result = F3_i::<N>::internal_add(result, rhs << 2*i); result = F3_i::<N>::internal_add(result, rhs << 2*i);}
+          1 => {result = F3_i::<N>::internal_add(result, rhs << 2*i);}
           _ => {}
       }
     }
@@ -227,17 +242,17 @@ impl F3_i {
 
   // We first convert the polynomials to vectors with coefficients in Z/3Z
   // Then we multiply them and reduce the result
-  fn internal_mul(a: u64, b: u64, N: u8) -> u16 {
+  fn internal_mul(a: u64, b: u64) -> u16 {
     const IRRED_POLY: [u64; 7] = [0b0000, 0b0001, 0b0010, 0b0110,0b1001, 0b0110, 0b1001];
 
     let bitmask: u64 = !((!0) << 2*N);
     let irred = IRRED_POLY[N as usize];
 
-    let mut result = F3_i::clmul(a, b, N); 
+    let mut result = F3_i::<N>::clmul(a, b); 
     while (result >> N*2) > 0 {
       let lsb = result & bitmask;
       let msb = result >> 2*N;
-      result = F3_i::internal_add(lsb, F3_i::clmul(msb, irred, N));
+      result = F3_i::<N>::internal_add(lsb, F3_i::<N>::clmul(msb, irred));
     }
 
     result as u16
@@ -245,36 +260,35 @@ impl F3_i {
 
 }
 
-impl Add for F3_i {
+impl<const N: u8> Add for F3_i<N> {
   type Output = Self;
   
   fn add(self, rhs: Self) -> Self::Output {
-    F3_i {element: F3_i::internal_add_fast(self.element as u64, rhs.element as u64) as u16, degree: self.degree}
+    F3_i {element: F3_i::<N>::internal_add_fast(self.element as u64, rhs.element as u64) as u16}
   }
 }
 
-impl Mul for F3_i {
+impl<const N: u8> Mul for F3_i<N> {
   type Output = Self;
 
   fn mul(self, rhs: Self) -> Self::Output {
-    F3_i {element: F3_i::internal_mul(self.element as u64, rhs.element as u64, self.degree as u8), degree: self.degree}
+    F3_i {element: F3_i::<N>::internal_mul(self.element as u64, rhs.element as u64)}
   }
 }
 
-impl AddAssign for F3_i {
+impl<const N: u8> AddAssign for F3_i<N> {
   fn add_assign(&mut self, rhs: Self) {
-    self.element = F3_i::internal_add_fast(self.element as u64, rhs.element as u64) as u16;
+    self.element = F3_i::<N>::internal_add_fast(self.element as u64, rhs.element as u64) as u16;
   }
 }
 
-impl MulAssign for F3_i {
+impl<const N: u8> MulAssign for F3_i<N> {
   fn mul_assign(&mut self, rhs: Self) {
-    self.element = F3_i::internal_mul(self.element as u64, rhs.element as u64, self.degree as u8);
+    self.element = F3_i::<N>::internal_mul(self.element as u64, rhs.element as u64);
   }
 }
 
-// uint32_t t = ((a_n ^ 0xaaaaaaaa) | 0x55555555) >> 1;
-// return (a_n - t) & t;
+
 
 impl<T: FieldTraits + Copy> Iterator for ProjectivePointIterator<T> {
     type Item = (T, T, T);

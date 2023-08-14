@@ -1,5 +1,5 @@
 
-use crate::{DPLUS2_CHOOSE_2, algebraic_types::{Lookup, Matrix}, DEGREE, field_extensions::{F2_i, FieldTraits}};
+use crate::{DPLUS2_CHOOSE_2, algebraic_types::{Lookup, Matrix}, DEGREE, field_extensions::{F2_i, FieldTraits, F3_i}};
 
 
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -43,6 +43,17 @@ impl Polynomial {
 
   pub fn evaluate<const N: u8>(self, index: usize, lut: &Vec<Vec<F2_i<N>>>) -> F2_i<N> {
     let mut res = F2_i::ZERO;
+    let index_lut = &lut[index];
+    for i in 0..DPLUS2_CHOOSE_2 {
+      if (self.bits >> i) & 1 == 1 {
+        res += index_lut[i];
+      }
+    }
+    res
+  }
+
+  pub fn evaluate_f3<const N: u8>(self, index: usize, lut: &Vec<Vec<F3_i<N>>>) -> F3_i<N> {
+    let mut res = F3_i::ZERO;
     let index_lut = &lut[index];
     for i in 0..DPLUS2_CHOOSE_2 {
       if (self.bits >> i) & 1 == 1 {
