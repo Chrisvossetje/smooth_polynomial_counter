@@ -18,7 +18,7 @@ const DEGREE: usize = 5;
 const DPLUS2_CHOOSE_2: usize = ((DEGREE+2) * (DEGREE+1)) / 2;
 
 const MAX_FIELD_EXT: usize = 6;
-
+const FIELD_SIZE: usize = 3;
 
 const NUM_THREADS: usize = 16;
 const CHUNK_SIZE: usize = 50;
@@ -42,8 +42,8 @@ fn main() {
 
   // Matrices
   println!("Generate matrices");
-  let pgl3_f2 = Matrix::generate_pgl3_f2();
-  println!("Number of matrices: {}", pgl3_f2.len());
+  let pgl3 = Matrix::generate_pgl3_f3();
+  println!("Number of matrices: {}", pgl3.len());
   println!();
 
   println!("Generate lookup stuff");
@@ -73,14 +73,14 @@ fn main() {
   // Polynomials
   //
   println!("Generate isomorphic polynomials");
-  let transform_lut = generate_transform_lut(&pgl3_f2, &normal);
+  let transform_lut = generate_transform_lut(&pgl3, &normal);
   
   let iso_polys = generate_iso_polynomials(&transform_lut);
   
   println!("Generated {} isomorphic polynomials", iso_polys.len());
   
   // Counting the polys for verification
-  let f168 = pgl3_f2.len() as f32;
+  let group_size = pgl3.len() as f32;
   let mut sum: u32 = 0;
   for isopoly in &iso_polys {
     let (_, size) = isopoly.deconstruct();
@@ -173,7 +173,7 @@ fn main() {
   }
   println!();
   println!("Amount of isomorphism classes: {}",results.len());
-  println!("Frequency: {:.0}", results.iter().fold(0.0 as f32, |acc, t| acc + (t.poly.size as f32 / f168)));
+  println!("Frequency: {:.0}", results.iter().fold(0.0 as f32, |acc, t| acc + (t.poly.size as f32 / group_size)));
   println!("Polynomials had Degree: {}",  DEGREE);
   println!("Total time: {:?}", start_time.elapsed());
 }
