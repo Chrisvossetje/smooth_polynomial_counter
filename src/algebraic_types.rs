@@ -109,7 +109,8 @@ impl<const N: u8> Lookup<N> {
     let x_res = Term::generate_points_for_multiple(&part_x);
     let y_res = Term::generate_points_for_multiple(&part_y);
     let z_res = Term::generate_points_for_multiple(&part_z);
-    
+    println!("Made lookup tables for degree {N}");
+
     Lookup { normal: n_res, part_x: x_res, part_y: y_res, part_z: z_res }
   }
 }

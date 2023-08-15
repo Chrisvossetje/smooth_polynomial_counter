@@ -168,13 +168,13 @@ pub struct F3_i<const N: u8> {
 impl<const N: u8> FieldTraits for F3_i<N> {
     const ZERO: F3_i<N> = F3_i {element: 0b0 };
     const ONE: F3_i<N> = F3_i {element: 0b1 };
-    const MAX: F3_i<N> = F3_i {element: 0xAA & !((!0)<< (2*N))} ; // DON'T 
+    const MAX: F3_i<N> = F3_i {element: 0xAAAA & !((!0)<< (2*N))} ; // DON'T 
 
     fn next(self) -> Option<Self> {
       if self == Self::MAX {
         None 
       } else {
-        let t = ((self.element ^ 0xaa) | 0x55) >> 1;
+        let t = ((self.element ^ 0xAAAA) | 0x5555) >> 1;
         let el = (Wrapping(self.element) - Wrapping(t)).0 & t;
         Some(F3_i {element: el as u16})
       }
@@ -202,8 +202,8 @@ impl<const N: u8> F3_i<N> {
   }
 
   pub fn internal_add(a: u64, b: u64) -> u64 {
-    const M1: u64 = 0x5555;
-    const M2: u64 = 0xAAAA;
+    const M1: u64 = 0x5555555555555555;
+    const M2: u64 = 0xAAAAAAAAAAAAAAAA;
 
     let xor = a^b;
     let and = a&b;
@@ -220,7 +220,7 @@ impl<const N: u8> F3_i<N> {
   }
 
   fn internal_add_fast(a: u64,b: u64) -> u64 {
-    const M2: u64 = 0xAAAA; 
+    const M2: u64 = 0xAAAAAAAAAAAAAAAA; 
     let na=!a;
     let nb=!b;
     let a4= ((M2 & na) >> 1) & na;

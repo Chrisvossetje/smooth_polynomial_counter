@@ -194,7 +194,8 @@ fn main() {
 
   let a: Vec<String> = results.iter().map(|t| t.to_string(&normal)).collect();
   let b = a.join("\n");
-  fs::write(FILE_NAME, b).expect("Unable to write file");
+  let c = "# Smooth polynomial represant | isomoprhism class | points defined over k_i\n".to_owned() + &b;
+  fs::write(FILE_NAME, c).expect("Unable to write file");
   
 
   for i in 0..MAX_FIELD_EXT {
