@@ -1,5 +1,5 @@
 
-use crate::{DPLUS2_CHOOSE_2, algebraic_types::{Lookup, Matrix}, DEGREE, field_extensions::{F2_i, FieldTraits, F3_i}, FIELD_SIZE};
+use crate::{DPLUS2_CHOOSE_2, algebraic_types::{Lookup, Matrix}, DEGREE, field_extensions::{F2_i, FieldTraits, F3_i}, FIELD_ORDER};
 
 
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -145,6 +145,50 @@ impl Polynomial {
     (lut_x, lut_y, lut_z)
   }
 
+  pub fn from_string(input: &str, lut: &Vec<Term>) -> Polynomial {
+
+    let mut poly: u64 = 0;
+
+    for str_term in input.split_whitespace() {
+      let mut iter = str_term.split("_");
+      let constant = iter.next().unwrap().parse::<u64>().unwrap();
+      let powers = iter.next().unwrap().parse::<u64>().unwrap();
+      let z = powers % 10;
+      let y = (powers / 10) % 10;
+      let x = (powers / 100) % 10;
+      
+      let t = Term {
+        x_deg: x as u8,
+        y_deg: y as u8,
+        z_deg: z as u8,
+        constant: 1,
+        };
+
+      for (index, term) in lut.iter().enumerate() {
+        if t == *term {
+          match FIELD_ORDER {
+            2 =>  {
+                    match constant {
+                      1 => poly += 1 << index,
+                      _ => panic!("Invalid constant in imported file")
+                    };
+                  },
+            3 =>  {
+                    match constant {
+                      1 => poly += 0b01 << 2*index,
+                      2 => poly += 0b10 << 2*index,
+                      _ => panic!("Invalid constant in imported file")
+                    };
+                  },
+            _ => {},
+          }
+        }
+      }
+    }
+
+    Polynomial { bits: poly }
+  }
+
   pub fn transform_by_matrix(self, transform_lut: &Vec<u64>) -> Polynomial {
     let mut bits = 0;
     for i in 0..DPLUS2_CHOOSE_2 {
@@ -270,7 +314,7 @@ pub fn exponentiate_linear_polynomial(a: u8, b: u8, c: u8, m: u8) -> Vec<Term> {
   for k1 in 0..=m {
     for k2 in 0..=(m-k1) {
       let k3 = m-k1-k2;
-      let coeff = binomial_coefficient(m, k1, k2, k3) % FIELD_SIZE as u8;
+      let coeff = binomial_coefficient(m, k1, k2, k3) % FIELD_ORDER as u8;
       if (coeff == 0)|| (k1>0 && a==0) || (k2>0 && b==0) || (k3>0 && c==0) {
         continue;
       }
@@ -289,7 +333,7 @@ pub fn polynomial_product(a: Vec<Term>, b: Vec<Term>, c: Vec<Term>) -> Vec<Term>
         let term = Term { x_deg: t1.x_deg + t2.x_deg + t3.x_deg, 
                           y_deg: t1.y_deg + t2.y_deg + t3.y_deg, 
                           z_deg: t1.z_deg + t2.z_deg + t3.z_deg, 
-                          constant: (t1.constant * t2.constant * t3.constant) % FIELD_SIZE as u8};
+                          constant: (t1.constant * t2.constant * t3.constant) % FIELD_ORDER as u8};
         result.push(term);
       }
     }
