@@ -57,13 +57,13 @@ fn main() {
   let (part_x, part_y, part_z) = Polynomial::generate_derative_luts(&normal);
   
   println!("Importing file");
-  let input = fs::read_to_string("output.txt").expect("Unable to open file");
+  let input = fs::read_to_string("input.txt").expect("Unable to open file");
   let mut lines = input.lines();
   // Verifying file validity against program 
   {
     lines.next();
     lines.next();
-    let degree_field_order = lines.next().expect("Incorrect format. Expected the following: \n# Homogenous Degree | Field Order \n5 | 3 \n# Constant_(xpower)(ypower)(zpower) ... Constant_(xpower)(ypower)(zpower)  | Isomorphism Class size \n1_023 2_500 | 4 ..."); 
+    let degree_field_order = lines.next().expect("Incorrect format. Expected the following: \n#Blablabla \n# Homogenous Degree | Field Order \n5 | 3 \n# Constant_(xpower)(ypower)(zpower) ... Constant_(xpower)(ypower)(zpower)  | Isomorphism Class size \n1_023 2_500 | 4 ..."); 
     
     let splits: Vec<&str> = degree_field_order.split("|").collect::<Vec<&str>>();
     let degree = splits[0].split_ascii_whitespace().next().unwrap().parse::<usize>().unwrap();
@@ -203,7 +203,6 @@ fn main() {
   }
   println!();
   println!("Amount of isomorphism classes: {}",results.len());
-  println!("Frequency: {:.0}", results.iter().fold(0.0 as f32, |acc, t| acc + (t.poly.size as f32 / group_size)));
   println!("Polynomials had Degree: {}",  DEGREE);
   println!("Total time: {:?}", start_time.elapsed());
 }
@@ -251,8 +250,6 @@ fn is_smooth(iso_polys: &Vec<IsoPolynomial>, start: usize, end: usize, super_lut
     // if result == None {continue;}
     // count[5] += size as usize;
     // points_on_curve[5] += result.unwrap();
-
-
 
     // let result = poly.has_singularity(&super_lut.6);
     // if result == None {continue;}
