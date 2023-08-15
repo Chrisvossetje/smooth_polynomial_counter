@@ -36,8 +36,7 @@ const PRINTING: bool = false;
 const FILE_NAME: &str = "./output.txt";
 
 // CHANGE THIS:
-type SuperType = (Lookup<1>,Lookup<2>,Lookup<3>,
-                  // Lookup<4>,Lookup<5>,Lookup<6>,
+type SuperType = (Lookup<1>,Lookup<2>,Lookup<3>, Lookup<4>,Lookup<5>,Lookup<6>,
                   // Lookup<7>,Lookup<8>, Lookup<9>,Lookup<10>,
                   );
 
@@ -108,9 +107,9 @@ fn main() {
   let super_lookup: SuperType = ( Lookup::<1>::create(&normal, &part_x, &part_y, &part_z),
                                   Lookup::<2>::create(&normal, &part_x, &part_y, &part_z),
                                   Lookup::<3>::create(&normal, &part_x, &part_y, &part_z),
-                                  // Lookup::<4>::create(&normal, &part_x, &part_y, &part_z),
-                                  // Lookup::<5>::create(&normal, &part_x, &part_y, &part_z),
-                                  // Lookup::<6>::create(&normal, &part_x, &part_y, &part_z),
+                                  Lookup::<4>::create(&normal, &part_x, &part_y, &part_z),
+                                  Lookup::<5>::create(&normal, &part_x, &part_y, &part_z),
+                                  Lookup::<6>::create(&normal, &part_x, &part_y, &part_z),
                                   // Lookup::<7>::create(&normal, &part_x, &part_y, &part_z),
                                   // Lookup::<8>::create(&normal, &part_x, &part_y, &part_z),
                                   // Lookup::<9>::create(&normal, &part_x, &part_y, &part_z),
@@ -236,20 +235,20 @@ fn is_smooth(iso_polys: &Vec<IsoPolynomial>, start: usize, end: usize, super_lut
     count[2] += size as usize;
     points_on_curve[2] += result.unwrap();
 
-    // let result = poly.has_singularity(&super_lut.3);
-    // if result == None {continue;}
-    // count[3] += size as usize;
-    // points_on_curve[3] += result.unwrap();
+    let result = poly.has_singularity(&super_lut.3);
+    if result == None {continue;}
+    count[3] += size as usize;
+    points_on_curve[3] += result.unwrap();
 
-    // let result = poly.has_singularity(&super_lut.4);
-    // if result == None {continue;}
-    // count[4] += size as usize;
-    // points_on_curve[4] += result.unwrap();
+    let result = poly.has_singularity(&super_lut.4);
+    if result == None {continue;}
+    count[4] += size as usize;
+    points_on_curve[4] += result.unwrap();
 
-    // let result = poly.has_singularity(&super_lut.5);
-    // if result == None {continue;}
-    // count[5] += size as usize;
-    // points_on_curve[5] += result.unwrap();
+    let result = poly.has_singularity(&super_lut.5);
+    if result == None {continue;}
+    count[5] += size as usize;
+    points_on_curve[5] += result.unwrap();
 
     // let result = poly.has_singularity(&super_lut.6);
     // if result == None {continue;}
