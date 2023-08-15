@@ -148,8 +148,12 @@ impl Polynomial {
   pub fn transform_by_matrix(self, transform_lut: &Vec<u64>) -> Polynomial {
     let mut bits = 0;
     for i in 0..DPLUS2_CHOOSE_2 {
-      if ((self.bits >> i) & 1) == 1 {
-        bits ^= transform_lut[i];
+      if (self.bits >> (2*i)) & 1 == 1 {
+        bits = F3_i::<1>::internal_add(bits, transform_lut[i]);
+      }
+      if self.bits >> (2*i) & 2 == 2 {
+        bits = F3_i::<1>::internal_add(bits, transform_lut[i]);
+        bits = F3_i::<1>::internal_add(bits, transform_lut[i]);
       }
     }
     Polynomial { bits: bits }
