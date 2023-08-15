@@ -18,7 +18,7 @@ mod polynomials;
 mod field_extensions;
 
 const DEGREE: usize = 5;
-const FIELD_ORDER: usize = 3;
+const FIELD_ORDER: usize = 2;
 
 
 const FIELD_EXT_LUT: [usize; 7] = [1,1,2,3,4,6,10];
