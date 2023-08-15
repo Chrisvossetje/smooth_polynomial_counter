@@ -84,7 +84,7 @@ fn main() {
     for l in lines {
       let mut line_iter = l.split("|");
       let polynomial = line_iter.next().unwrap();
-      let iso_size = line_iter.next().unwrap().split_ascii_whitespace().next().unwrap().parse::<u32>().unwrap();;
+      let iso_size = line_iter.next().unwrap().split_ascii_whitespace().next().unwrap().parse::<u32>().unwrap();
 
       iso_polys.push(IsoPolynomial {
           representative: Polynomial::from_string(polynomial, &normal),
