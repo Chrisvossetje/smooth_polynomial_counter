@@ -1,0 +1,7 @@
+# This file give you represants of all isomorphism classes of homogeneous projective polynomials over P_2 by applying PGL_3 and their class size.
+# Homogeneous Degree | Field Order
+5 | 3
+# Constant_(xpower)(ypower)(zpower) .... | Isomorphism Class size
+1_023 2_500 | 4
+2_311 1_032 | 4
+1_410 2_050 | 4

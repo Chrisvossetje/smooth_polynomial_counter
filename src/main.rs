@@ -18,14 +18,14 @@ mod polynomials;
 mod field_extensions;
 
 const DEGREE: usize = 5;
-const FIELD_SIZE: usize = 3;
+const FIELD_ORDER: usize = 3;
 
 
 const FIELD_EXT_LUT: [usize; 7] = [1,1,2,3,4,6,10];
 const MAX_FIELD_EXT: usize = FIELD_EXT_LUT[DEGREE];
 
-// (q^21 - 1) / (q - 1)
-const POLYNOMIALS: usize = (FIELD_SIZE.pow(21) - 1) / (FIELD_SIZE - 1);
+// Q^21 - 1 / 2
+const POLYNOMIALS: usize = (FIELD_ORDER.pow(21) - 1) / 2;
 const DPLUS2_CHOOSE_2: usize = ((DEGREE+2) * (DEGREE+1)) / 2;
 
 
@@ -47,21 +47,64 @@ struct CustomChunk {
   pub end: usize,
 }
 
+
+
 fn main() {
   let start_time = Instant::now();
 
-  // Matrices
-  println!("Generate matrices");
-  let pgl3 = Matrix::generate_pgl3_f3();
-  println!("Number of matrices: {}", pgl3.len());
-  println!();
-
-  println!("Generate lookup stuff");
+  println!("Generate terms");
   let normal = Polynomial::generate_default_lut();
   let (part_x, part_y, part_z) = Polynomial::generate_derative_luts(&normal);
- 
-  // Lookup Tables
+  
+  println!("Importing file");
+  let input = fs::read_to_string("input.txt").expect("Unable to open file");
+  let mut lines = input.lines();
+  // Verifying file validity against program 
+  {
+    lines.next();
+    lines.next();
+    let degree_field_order = lines.next().expect("Incorrect format. Expected the following: \n#Blablabla \n# Homogenous Degree | Field Order \n5 | 3 \n# Constant_(xpower)(ypower)(zpower) ... Constant_(xpower)(ypower)(zpower)  | Isomorphism Class size \n1_023 2_500 | 4 ..."); 
+    
+    let splits: Vec<&str> = degree_field_order.split("|").collect::<Vec<&str>>();
+    let degree = splits[0].split_ascii_whitespace().next().unwrap().parse::<usize>().unwrap();
+    let field_order = splits[1].split_ascii_whitespace().next().unwrap().parse::<usize>().unwrap();
+    lines.next();
+    
+    if degree != DEGREE {
+      panic!("Degree of input file not equal to compiled program")
+    }
+
+    if field_order != FIELD_ORDER {
+      panic!("Field order of input file not equal to compiled program")
+    }
+  }
+
+  let iso_polys = {
+    let mut iso_polys = vec![];
+
+    for l in lines {
+      let mut line_iter = l.split("|");
+      let polynomial = line_iter.next().unwrap();
+      let iso_size = line_iter.next().unwrap().split_ascii_whitespace().next().unwrap().parse::<u32>().unwrap();;
+
+      iso_polys.push(IsoPolynomial {
+          representative: Polynomial::from_string(polynomial, &normal),
+          size: iso_size,
+      });
+    } 
+    iso_polys
+  };
+
+  let import_time = Instant::now();
+  println!("Generating took: {:?}", (import_time-start_time));
+  println!();  
+
+  // return;
+
+
+  // Generating Lookup Tables
   // CHANGE THIS: 
+  println!("Generating Lookup tables");
   let super_lookup: SuperType = ( Lookup::<1>::create(&normal, &part_x, &part_y, &part_z),
                                   Lookup::<2>::create(&normal, &part_x, &part_y, &part_z),
                                   Lookup::<3>::create(&normal, &part_x, &part_y, &part_z),
@@ -76,30 +119,7 @@ fn main() {
 
   let lookup_time = Instant::now();
   println!("Generating took: {:?}", (lookup_time-start_time));
-  println!();
-
-
-  //
-  // Polynomials
-  //
-  println!("Generate isomorphic polynomials");
-  let transform_lut = generate_transform_lut(&pgl3, &normal);
-  
-  let iso_polys = generate_iso_polynomials(&transform_lut);
-  
-  println!("Generated {} isomorphic polynomials", iso_polys.len());
-  
-  // Counting the polys for verification
-  let group_size = pgl3.len() as f32;
-  let mut sum: u32 = 0;
-  for isopoly in &iso_polys {
-    let (_, size) = isopoly.deconstruct();
-    sum += size;
-  }
-  let poly_time = Instant::now();
-  println!("Total polynomials: {}", sum);
-  println!("Generating took: {:?}", (poly_time-lookup_time));
-  println!();
+  println!();  
   
 
   //
@@ -151,7 +171,7 @@ fn main() {
           }
         }
         if PRINTING {
-          println!("Chunks left: {index} | Total Chunks: {chunk_length} | Estimated time: {:.2}", index as f64 * (Instant::now() - poly_time).as_secs_f64() / (chunk_length - index) as f64);
+          println!("Chunks left: {index} | Total Chunks: {chunk_length} | Estimated time: {:.2}", index as f64 * (Instant::now() - lookup_time).as_secs_f64() / (chunk_length - index) as f64);
         }
 
         let result =  
@@ -183,7 +203,6 @@ fn main() {
   }
   println!();
   println!("Amount of isomorphism classes: {}",results.len());
-  println!("Frequency: {:.0}", results.iter().fold(0.0 as f32, |acc, t| acc + (t.poly.size as f32 / group_size)));
   println!("Polynomials had Degree: {}",  DEGREE);
   println!("Total time: {:?}", start_time.elapsed());
 }
@@ -231,8 +250,6 @@ fn is_smooth(iso_polys: &Vec<IsoPolynomial>, start: usize, end: usize, super_lut
     // if result == None {continue;}
     // count[5] += size as usize;
     // points_on_curve[5] += result.unwrap();
-
-
 
     // let result = poly.has_singularity(&super_lut.6);
     // if result == None {continue;}
