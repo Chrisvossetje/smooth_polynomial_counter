@@ -194,23 +194,23 @@ impl<const N: u8> F3_i<N> {
     println!(" ({})", N);
   }
 
-  pub fn internal_add(a: u64, b: u64) -> u64 {
-    const M1: u64 = 0x5555555555555555;
-    const M2: u64 = 0xAAAAAAAAAAAAAAAA;
+  // pub fn internal_add(a: u64, b: u64) -> u64 {
+  //   const M1: u64 = 0x5555555555555555;
+  //   const M2: u64 = 0xAAAAAAAAAAAAAAAA;
 
-    let xor = a^b;
-    let and = a&b;
+  //   let xor = a^b;
+  //   let and = a&b;
 
-    let one = (and & M1) << 1;
-    let two = (and & M2) >> 1;
+  //   let one = (and & M1) << 1;
+  //   let two = (and & M2) >> 1;
 
-    let ab = ((a&M2) >> 1) & b;
-    let ba = ((b&M2) >> 1) & a;
+  //   let ab = ((a&M2) >> 1) & b;
+  //   let ba = ((b&M2) >> 1) & a;
 
-    let mul = (ab | ba) * 0b11;
+  //   let mul = (ab | ba) * 0b11;
 
-    (mul ^ xor) | one | two
-  }
+  //   (mul ^ xor) | one | two
+  // }
 
   fn internal_add_fast(a: u64,b: u64) -> u64 {
     const M2: u64 = 0xAAAAAAAAAAAAAAAA; 
@@ -226,8 +226,8 @@ impl<const N: u8> F3_i<N> {
     for i in 0..N {
       let factor = (lhs >> (2*i)) & 0b11;
       match factor {
-          2 => {result = F3_i::<N>::internal_add(result, rhs << 2*i); result = F3_i::<N>::internal_add(result, rhs << 2*i);}
-          1 => {result = F3_i::<N>::internal_add(result, rhs << 2*i);}
+          2 => {result = F3_i::<N>::internal_add_fast(result, rhs << 2*i); result = F3_i::<N>::internal_add_fast(result, rhs << 2*i);}
+          1 => {result = F3_i::<N>::internal_add_fast(result, rhs << 2*i);}
           _ => {}
       }
     }
@@ -244,7 +244,7 @@ impl<const N: u8> F3_i<N> {
     while (result >> N*2) > 0 {
       let lsb = result & bitmask;
       let msb = result >> 2*N;
-      result = F3_i::<N>::internal_add(lsb, F3_i::<N>::clmul(msb, irred));
+      result = F3_i::<N>::internal_add_fast(lsb, F3_i::<N>::clmul(msb, irred));
     }
 
     result as u16

@@ -2,7 +2,7 @@ use std::{time::Instant, sync::{mpsc, Arc, Mutex}, thread, fs};
 
 use algebraic_types::{IsoPolynomial, Lookup, PolynomialResult};
 
-use crate::{polynomials::Polynomial, field_extensions::F3_i};
+use crate::{polynomials::Polynomial, field_extensions::{F3_i, FieldTraits}};
 
 
 
@@ -193,12 +193,12 @@ fn main() {
             None => {return;}
           }
         }
+        
+        let result =  
+        is_smooth(&local_iso_polys, start, end, &local_super_lookup);
         if PRINTING {
           println!("Chunks left: {index} | Total Chunks: {chunk_length} | Estimated time: {:.2}", index as f64 * (Instant::now() - lookup_time).as_secs_f64() / (chunk_length - index) as f64);
         }
-
-        let result =  
-          is_smooth(&local_iso_polys, start, end, &local_super_lookup);
         a_tx.send(result).unwrap();      
       }
     });
