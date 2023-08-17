@@ -1,5 +1,5 @@
 
-use crate::{DPLUS2_CHOOSE_2, algebraic_types::{Lookup, Matrix}, DEGREE, field_extensions::{F2_i, FieldTraits, F3_i}, FIELD_ORDER};
+use crate::{DPLUS2_CHOOSE_2, algebraic_types::Lookup, DEGREE, field_extensions::{F2_i, FieldTraits, F3_i}, FIELD_ORDER};
 
 
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -14,6 +14,7 @@ pub enum Singularity{
 }
 
 impl Polynomial {
+  #[allow(dead_code)]
   pub fn new(bits: u64) -> Polynomial {
     Polynomial { bits: bits }
   }
@@ -22,13 +23,36 @@ impl Polynomial {
     let mut poly_str = String::new();
     let mut empty = true;
     for i in 0..DPLUS2_CHOOSE_2 {
-      if (self.bits >> i) & 1 == 1 {
-        if lut[i].constant != 0 { 
-          if empty {
-            poly_str = format!("{}", lut[i].str());
-            empty = false;
-          } else {
-            poly_str = format!("{} + {}", poly_str, lut[i].str());
+      if FIELD_ORDER == 2 {
+        if (self.bits >> i) & 1 == 1 {
+          if lut[i].constant != 0 { 
+            if empty {
+              poly_str = format!("1_{}", lut[i].str());
+              empty = false;
+            } else {
+              poly_str = format!("{} 1_{}", poly_str, lut[i].str());
+            }
+          }
+        }
+      } else if FIELD_ORDER == 3 {        
+        if (self.bits >> 2*i) & 0b01 == 1 {
+          if lut[i].constant != 0 { 
+            if empty {
+              poly_str = format!("1_{}", lut[i].str());
+              empty = false;
+            } else {
+              poly_str = format!("{} 1_{}", poly_str, lut[i].str());
+            }
+          }
+        }
+        if (self.bits >> 2*i) & 0b10 == 2 {
+          if lut[i].constant != 0 { 
+            if empty {
+              poly_str = format!("2_{}", lut[i].str());
+              empty = false;
+            } else {
+              poly_str = format!("{} 2_{}", poly_str, lut[i].str());
+            }
           }
         }
       }
@@ -41,11 +65,12 @@ impl Polynomial {
     println!("{}", self.str(lut));
   }
 
+  #[allow(dead_code)]
   pub fn evaluate_f2<const N: u8>(self, index: usize, lut: &Vec<Vec<F2_i<N>>>) -> F2_i<N> {
     let mut res = F2_i::ZERO;
     let index_lut = &lut[index];
     for i in 0..DPLUS2_CHOOSE_2 {
-      if (self.bits >> 2*i) & 1 == 1 {
+      if (self.bits >> i) & 1 == 1 {
         res += index_lut[i];
       }
     }
@@ -188,22 +213,7 @@ impl Polynomial {
 
     Polynomial { bits: poly }
   }
-
-  pub fn transform_by_matrix(self, transform_lut: &Vec<u64>) -> Polynomial {
-    let mut bits = 0;
-    for i in 0..DPLUS2_CHOOSE_2 {
-      if (self.bits >> (2*i)) & 1 == 1 {
-        bits = F3_i::<1>::internal_add(bits, transform_lut[i]);
-      }
-      if self.bits >> (2*i) & 2 == 2 {
-        bits = F3_i::<1>::internal_add(bits, transform_lut[i]);
-        bits = F3_i::<1>::internal_add(bits, transform_lut[i]);
-      }
-    }
-    Polynomial { bits: bits }
-  }
 }
-
 
 
 #[derive(Debug, Copy, Clone, PartialEq, Hash, Eq)]
@@ -220,6 +230,7 @@ impl Term {
     Term { x_deg: 0, y_deg: 0, z_deg: 0, constant: 0 }
   }
 
+  #[allow(dead_code)]
   pub fn evaluate_f2<const N: u8>(self, x: F2_i<N>, y: F2_i<N>, z: F2_i<N>) -> F2_i<N> {
     if self.constant == 0 {
       F2_i::ZERO
@@ -237,7 +248,7 @@ impl Term {
   }
 
   pub fn str(self) -> String {
-    format!("X^{} Y^{} Z^{}", self.x_deg, self.y_deg, self.z_deg)
+    format!("{}{}{}", self.x_deg, self.y_deg, self.z_deg)
   }
   
   pub fn generate_derivatives(self) -> (Term, Term, Term) {
@@ -284,79 +295,8 @@ impl Term {
     }
     transpose(resultant_terms)
   }
-
-  pub fn transform_by_matrix(self, matrix: &Matrix, lut: &Vec<Term>) -> u64 {
-    if self.constant == 0 {
-      return 0;
-    }
-    let p1 = exponentiate_linear_polynomial(matrix.data[0][0], matrix.data[0][1], matrix.data[0][2], self.x_deg);
-    let p2 = exponentiate_linear_polynomial(matrix.data[1][0], matrix.data[1][1], matrix.data[1][2], self.y_deg);
-    let p3 = exponentiate_linear_polynomial(matrix.data[2][0], matrix.data[2][1], matrix.data[2][2], self.z_deg);
-    let terms = polynomial_product(p1, p2, p3);
-
-    let mut result = 0;
-    for t in terms {
-      for i in 0..DPLUS2_CHOOSE_2 {
-        if lut[i].is_similar(t) {
-          let bit = (t.constant as u64) << (i*2);
-          result = F3_i::<1>::internal_add(result, bit);
-        }
-      }
-    }
-    result
-  }
-
-  fn is_similar(&self, t: Term) -> bool {
-    self.x_deg == t.x_deg && self.y_deg == t.y_deg && self.z_deg == t.z_deg
-  }
 }
 
-// (ax+by+cz)^m = sum_{k1+k2+k3=m} (m choose k1,k2,k3) a^k1 b^k2 c^k3 x^k1 y^k2 z^k3
-// SLOW!
-pub fn exponentiate_linear_polynomial(a: u8, b: u8, c: u8, m: u8) -> Vec<Term> {
-  let mut terms: Vec<Term> = Vec::new();
-  for k1 in 0..=m {
-    for k2 in 0..=(m-k1) {
-      let k3 = m-k1-k2;
-      let coeff = binomial_coefficient(m, k1, k2, k3) % FIELD_ORDER as u8;
-      if (coeff == 0)|| (k1>0 && a==0) || (k2>0 && b==0) || (k3>0 && c==0) {
-        continue;
-      }
-      let term = Term { x_deg: k1, y_deg: k2, z_deg: k3, constant: coeff };
-      terms.push(term);
-    }
-  }
-  terms
-}
-
-pub fn polynomial_product(a: Vec<Term>, b: Vec<Term>, c: Vec<Term>) -> Vec<Term> {
-  let mut result: Vec<Term> = Vec::new();
-  for t1 in &a {
-    for t2 in &b {
-      for t3 in &c {
-        let term = Term { x_deg: t1.x_deg + t2.x_deg + t3.x_deg, 
-                          y_deg: t1.y_deg + t2.y_deg + t3.y_deg, 
-                          z_deg: t1.z_deg + t2.z_deg + t3.z_deg, 
-                          constant: (t1.constant * t2.constant * t3.constant) % FIELD_ORDER as u8};
-        result.push(term);
-      }
-    }
-  }
-  result
-}
-
-pub fn binomial_coefficient(m: u8, k1: u8, k2: u8, k3:u8) -> u8 {
-  (factorial(m) / (factorial(k1) * factorial(k2) * factorial(k3))) as u8
-}
-
-pub fn factorial(n: u8) -> u64 {
-  let mut result: u64 = 1;
-  for i in 1..=n as u64 {
-    result *= i;
-  }
-  result
-}
-  
 fn transpose<T>(v: Vec<Vec<T>>) -> Vec<Vec<T>> {
   assert!(!v.is_empty());
   let len = v[0].len();
@@ -369,17 +309,4 @@ fn transpose<T>(v: Vec<Vec<T>>) -> Vec<Vec<T>> {
             .collect::<Vec<T>>()
     })
     .collect()
-}
-
-pub fn generate_transform_lut(pgl3: &Vec<Matrix>, lut: &Vec<Term>) -> Vec<Vec<u64>> {
-  let mut result = vec![];
-  for m in pgl3 {
-    let mut result_for_m = vec![];
-    for t in lut{
-      let transformed = t.transform_by_matrix(&m, &lut);
-      result_for_m.push(transformed);
-    }
-    result.push(result_for_m);
-  }
-  result
 }

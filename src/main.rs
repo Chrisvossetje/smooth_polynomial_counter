@@ -2,7 +2,7 @@ use std::{time::Instant, sync::{mpsc, Arc, Mutex}, thread, fs};
 
 use algebraic_types::{IsoPolynomial, Lookup, PolynomialResult};
 
-use crate::{algebraic_types::generate_iso_polynomials, polynomials::{Polynomial, generate_transform_lut}, algebraic_types::Matrix, field_extensions::{F2_i, FieldTraits}};
+use crate::polynomials::Polynomial;
 
 
 
@@ -18,25 +18,25 @@ mod polynomials;
 mod field_extensions;
 
 const DEGREE: usize = 5;
-const FIELD_ORDER: usize = 2;
+const FIELD_ORDER: usize = 3;
 
 
 const FIELD_EXT_LUT: [usize; 7] = [1,1,2,3,4,6,10];
 const MAX_FIELD_EXT: usize = FIELD_EXT_LUT[DEGREE];
 
-// Q^21 - 1 / 2
-const POLYNOMIALS: usize = (FIELD_ORDER.pow(21) - 1) / 2;
 const DPLUS2_CHOOSE_2: usize = ((DEGREE+2) * (DEGREE+1)) / 2;
 
 
 const NUM_THREADS: usize = 16;
-const CHUNK_SIZE: usize = 50;
+const CHUNK_SIZE: usize = 5120240;
 const PRINTING: bool = false;
 
 const FILE_NAME: &str = "./output.txt";
 
 // CHANGE THIS:
-type SuperType = (Lookup<1>,Lookup<2>,Lookup<3>, Lookup<4>,Lookup<5>,Lookup<6>,
+type SuperType = (Lookup<1>,Lookup<2>,Lookup<3>,
+                   Lookup<4>,
+                  Lookup<5>,Lookup<6>,
                   // Lookup<7>,Lookup<8>, Lookup<9>,Lookup<10>,
                   );
 
@@ -194,7 +194,7 @@ fn main() {
 
   let a: Vec<String> = results.iter().map(|t| t.to_string(&normal)).collect();
   let b = a.join("\n");
-  let c = "# Smooth polynomial represant | isomoprhism class | points defined over k_i\n".to_owned() + &b;
+  let c = "# Smooth polynomial representant (CONSTANT_(xpower)(ypower)(zpower)) | isomoprhism class | points defined over k_i\n".to_owned() + &b;
   fs::write(FILE_NAME, c).expect("Unable to write file");
   
 

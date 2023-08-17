@@ -70,6 +70,7 @@ impl<const N: u8> FieldTraits for F2_i<N> {
 }
 
 impl<const N: u8> F2_i<N> {
+  #[allow(dead_code)]
   pub fn new(element: u16) -> F2_i<N> {
     F2_i {element}
   }
@@ -117,14 +118,6 @@ impl<const N: u8> F2_i<N> {
       }
     }
     res
-  }
-
-  pub fn is_zero(&self) -> bool {
-    if self.element == 0 {
-      true
-    } else {
-      false
-    }
   }
 }
 
