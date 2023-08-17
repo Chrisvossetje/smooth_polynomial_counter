@@ -1,5 +1,5 @@
 
-use crate::{DPLUS2_CHOOSE_2, algebraic_types::{Lookup, Matrix}, DEGREE, field_extensions::{F2_i, FieldTraits, F3_i}, FIELD_ORDER};
+use crate::{DPLUS2_CHOOSE_2, algebraic_types::{Lookup, Matrix}, DEGREE, field_extensions::{F2_i, FieldTraits, F3_i}, FIELD_ORDER, COEFF_BIT_SIZE};
 
 
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -45,7 +45,7 @@ impl Polynomial {
     let mut res = F2_i::ZERO;
     let index_lut = &lut[index];
     for i in 0..DPLUS2_CHOOSE_2 {
-      if (self.bits >> 2*i) & 1 == 1 {
+      if (self.bits >> i) & 1 == 1 {
         res += index_lut[i];
       }
     }

@@ -24,6 +24,13 @@ const FIELD_ORDER: usize = 3;
 const FIELD_EXT_LUT: [usize; 7] = [1,1,2,3,4,6,10];
 const MAX_FIELD_EXT: usize = FIELD_EXT_LUT[DEGREE];
 
+
+const COEFF_BIT_SIZES: [usize; 5] = [1,1,1,2,2];
+const COEFF_BIT_SIZE: usize = COEFF_BIT_SIZES[FIELD_ORDER];
+
+const PGL3_SIZES: [f64; 4] = [0., 1., 168., 5616.];
+const PGL3_SIZE: f64 = PGL3_SIZES[FIELD_ORDER];
+
 // Q^21 - 1 / 2
 const POLYNOMIALS: usize = (FIELD_ORDER.pow(21) - 1) / 2;
 const DPLUS2_CHOOSE_2: usize = ((DEGREE+2) * (DEGREE+1)) / 2;
@@ -31,7 +38,7 @@ const DPLUS2_CHOOSE_2: usize = ((DEGREE+2) * (DEGREE+1)) / 2;
 
 const NUM_THREADS: usize = 16;
 const CHUNK_SIZE: usize = 50;
-const PRINTING: bool = false;
+const PRINTING: bool = true;
 
 const FILE_NAME: &str = "./output.txt";
 
@@ -56,7 +63,18 @@ fn main() {
   let (part_x, part_y, part_z) = Polynomial::generate_derative_luts(&normal);
   
   println!("Importing file");
-  let input = fs::read_to_string("input.txt").expect("Unable to open file");
+
+  let mut path = format!("input/{}-{}.txt", DEGREE, FIELD_ORDER);
+
+  match fs::metadata(&path) {
+    Ok(_) => {},
+    Err(_) => {
+      println!("File not found, defaulting to 'input.txt'");
+      path = "input.txt".to_owned();
+    }
+  }
+
+  let input = fs::read_to_string(path).expect("Unable to open file");
   let mut lines = input.lines();
   // Verifying file validity against program 
   {
@@ -203,6 +221,13 @@ fn main() {
   }
   println!();
   println!("Amount of isomorphism classes: {}",results.len());
+  let frequency = results.iter().fold(0, |acc, t| acc + t.poly.size) as f64 / PGL3_SIZE;
+  println!("Frequency: {}", frequency);
+  if frequency == (smooth[MAX_FIELD_EXT-1] as f64 / PGL3_SIZE) {
+    println!("Frequency is correct!");
+  } else {
+    println!("Frequency does not match! Should be: {}", smooth[MAX_FIELD_EXT-1] as f64 / PGL3_SIZE);
+  }
   println!("Polynomials had Degree: {}",  DEGREE);
   println!("Total time: {:?}", start_time.elapsed());
 }
@@ -219,6 +244,7 @@ fn is_smooth(iso_polys: &Vec<IsoPolynomial>, start: usize, end: usize, super_lut
     let iso_poly = &iso_polys[i];
     let (poly, size) = iso_poly.deconstruct();
     let mut points_on_curve = [0; MAX_FIELD_EXT];
+
 
     // CHANGE THIS: 
     let result = poly.has_singularity(&super_lut.0);
