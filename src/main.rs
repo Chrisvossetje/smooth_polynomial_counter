@@ -37,7 +37,7 @@ const DPLUS2_CHOOSE_2: usize = ((DEGREE+2) * (DEGREE+1)) / 2;
 
 
 const NUM_THREADS: usize = 16;
-const CHUNK_SIZE: usize = 50;
+const CHUNK_SIZE: usize = 1024;
 const PRINTING: bool = true;
 
 const FILE_NAME: &str = "./output.txt";
