@@ -37,7 +37,7 @@ const DPLUS2_CHOOSE_2: usize = ((DEGREE+2) * (DEGREE+1)) / 2;
 
 
 const NUM_THREADS: usize = 16;
-const CHUNK_SIZE: usize = 50;
+const CHUNK_SIZE: usize = 1024*64;
 const PRINTING: bool = true;
 
 const FILE_NAME: &str = "./output.txt";
@@ -225,6 +225,7 @@ fn main() {
   println!("Amount of isomorphism classes: {}",results.len());
   let frequency = results.iter().fold(0, |acc, t| acc + t.poly.size) as f64 / PGL3_SIZE;
   println!("Frequency: {}", frequency);
+  println!("????: {}", (smooth[MAX_FIELD_EXT-1] as f64 / PGL3_SIZE));
   if frequency == (smooth[MAX_FIELD_EXT-1] as f64 / PGL3_SIZE) {
     println!("Frequency is correct!");
   } else {
