@@ -2,7 +2,7 @@ use std::{time::Instant, sync::{mpsc, Arc, Mutex}, thread, fs};
 
 use algebraic_types::{IsoPolynomial, Lookup, PolynomialResult};
 
-use crate::polynomials::Polynomial;
+use crate::{polynomials::Polynomial, field_extensions::{F3_i, FieldTraits}};
 
 
 
@@ -17,7 +17,7 @@ mod polynomials;
 #[allow(non_camel_case_types)]
 mod field_extensions;
 
-const DEGREE: usize = 5;
+const DEGREE: usize = 3;
 const FIELD_ORDER: usize = 3;
 
 
@@ -44,8 +44,8 @@ const FILE_NAME: &str = "./output.txt";
 
 // CHANGE THIS:
 type SuperType = (Lookup<1>,Lookup<2>,Lookup<3>,
-                   Lookup<4>,
-                  Lookup<5>,Lookup<6>,
+                  //  Lookup<4>,
+                  // Lookup<5>,Lookup<6>,
                   // Lookup<7>,Lookup<8>, Lookup<9>,Lookup<10>,
                   );
 
@@ -127,9 +127,9 @@ fn main() {
   let super_lookup: SuperType = ( Lookup::<1>::create(&normal, &part_x, &part_y, &part_z),
                                   Lookup::<2>::create(&normal, &part_x, &part_y, &part_z),
                                   Lookup::<3>::create(&normal, &part_x, &part_y, &part_z),
-                                  Lookup::<4>::create(&normal, &part_x, &part_y, &part_z),
-                                  Lookup::<5>::create(&normal, &part_x, &part_y, &part_z),
-                                  Lookup::<6>::create(&normal, &part_x, &part_y, &part_z),
+                                  // Lookup::<4>::create(&normal, &part_x, &part_y, &part_z),
+                                  // Lookup::<5>::create(&normal, &part_x, &part_y, &part_z),
+                                  // Lookup::<6>::create(&normal, &part_x, &part_y, &part_z),
                                   // Lookup::<7>::create(&normal, &part_x, &part_y, &part_z),
                                   // Lookup::<8>::create(&normal, &part_x, &part_y, &part_z),
                                   // Lookup::<9>::create(&normal, &part_x, &part_y, &part_z),
@@ -140,6 +140,13 @@ fn main() {
   println!("Generating took: {:?}", (lookup_time-start_time));
   println!();  
   
+  let a = F3_i::<3>::new(0b011000);
+  let b = F3_i::<3>::new(0b100010);
+  println!("{:?}", a*b);  
+
+  for (index, (x,y,z)) in F3_i::<2>::iterate_over_points().enumerate() {
+    println!("{index},{:?},{:?},{:?}", x,y,z);
+  }
 
   //
   // Chunk generation so threads get fed evenly
@@ -189,12 +196,12 @@ fn main() {
             None => {return;}
           }
         }
+        
+        let result =  
+        is_smooth(&local_iso_polys, start, end, &local_super_lookup);
         if PRINTING {
           println!("Chunks left: {index} | Total Chunks: {chunk_length} | Estimated time: {:.2}", index as f64 * (Instant::now() - lookup_time).as_secs_f64() / (chunk_length - index) as f64);
         }
-
-        let result =  
-          is_smooth(&local_iso_polys, start, end, &local_super_lookup);
         a_tx.send(result).unwrap();      
       }
     });
@@ -265,20 +272,20 @@ fn is_smooth(iso_polys: &Vec<IsoPolynomial>, start: usize, end: usize, super_lut
     count[2] += size as usize;
     points_on_curve[2] += result.unwrap();
 
-    let result = poly.has_singularity(&super_lut.3);
-    if result == None {continue;}
-    count[3] += size as usize;
-    points_on_curve[3] += result.unwrap();
+    // let result = poly.has_singularity(&super_lut.3);
+    // if result == None {continue;}
+    // count[3] += size as usize;
+    // points_on_curve[3] += result.unwrap();
 
-    let result = poly.has_singularity(&super_lut.4);
-    if result == None {continue;}
-    count[4] += size as usize;
-    points_on_curve[4] += result.unwrap();
+    // let result = poly.has_singularity(&super_lut.4);
+    // if result == None {panic!()}
+    // count[4] += size as usize;
+    // points_on_curve[4] += result.unwrap();
 
-    let result = poly.has_singularity(&super_lut.5);
-    if result == None {continue;}
-    count[5] += size as usize;
-    points_on_curve[5] += result.unwrap();
+    // let result = poly.has_singularity(&super_lut.5);
+    // if result == None {continue;}
+    // count[5] += size as usize;
+    // points_on_curve[5] += result.unwrap();
 
     // let result = poly.has_singularity(&super_lut.6);
     // if result == None {continue;}
