@@ -225,6 +225,7 @@ fn main() {
   println!("Amount of isomorphism classes: {}",results.len());
   let frequency = results.iter().fold(0, |acc, t| acc + t.poly.size) as f64 / PGL3_SIZE;
   println!("Frequency: {}", frequency);
+  println!("????: {}", (smooth[MAX_FIELD_EXT-1] as f64 / PGL3_SIZE));
   if frequency == (smooth[MAX_FIELD_EXT-1] as f64 / PGL3_SIZE) {
     println!("Frequency is correct!");
   } else {

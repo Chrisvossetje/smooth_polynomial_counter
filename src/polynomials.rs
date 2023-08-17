@@ -110,7 +110,7 @@ impl Polynomial {
   pub fn has_singularity<const N: u8>(self, lookup: &Lookup<N>) -> Option<usize> {
     let mut points_on_curve = 0;
 
-    for (index, _) in F2_i::<N>::iterate_over_points().enumerate() {
+    for (index, _) in F3_i::<N>::iterate_over_points().enumerate() {
       if self.has_singularity_point(index,lookup, &mut points_on_curve) == Singularity::Singular {
         return None
       }
