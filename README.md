@@ -7,7 +7,7 @@ We take a polynomial and we check whether or not it is singular in any k_i field
 At this point only F2 and F3 are implemented, because the time complexity rises incredibly quickly with higher q.
 However the biggest problem is not per se the amount of points to check. But the generation of all isomorphism classes.
 
-Developed by,
-Jacco Hijmans and Chris Vos
-Assisted by,
+Developed by,  
+Jacco Hijmans and Chris Vos  
+Assisted by,  
 Prof. Dr. C.F. Faber at Utrecht University
