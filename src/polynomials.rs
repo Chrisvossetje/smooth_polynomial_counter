@@ -93,6 +93,7 @@ impl Polynomial {
   }
 
 
+  // FIELD_ORDER_PROBLEM
   pub fn has_singularity_point<const N: u8>(self, index: usize,lookup: &Lookup<N>, count: &mut usize) -> Singularity {
     if self.evaluate_f3(index, &lookup.normal) == F3_i::ZERO {
       *count += 1;
@@ -110,6 +111,7 @@ impl Polynomial {
   pub fn has_singularity<const N: u8>(self, lookup: &Lookup<N>) -> Option<usize> {
     let mut points_on_curve = 0;
 
+  // FIELD_ORDER_PROBLEM
     for (index, _) in F3_i::<N>::iterate_over_points().enumerate() {
       if self.has_singularity_point(index,lookup, &mut points_on_curve) == Singularity::Singular {
         return None
@@ -190,7 +192,7 @@ impl Polynomial {
         };
 
       for (index, term) in lut.iter().enumerate() {
-        if t == *term {
+        if t.is_similar(*term) {
           match FIELD_ORDER {
             2 =>  {
                     match constant {
@@ -300,9 +302,7 @@ impl Term {
     (term_x, term_y, term_z)
   }
 
-
-
-
+  
   pub fn generate_precalculated_points<const N: u8>(self) -> Vec<F3_i<N>> {
     let mut results = Vec::new();
     for (x,y,z) in F3_i::iterate_over_points() {
@@ -313,6 +313,7 @@ impl Term {
     results
   }
 
+  // FIELD_ORDER_PROBLEM
   pub fn generate_points_for_multiple<const N: u8>(terms: &Vec<Term>) -> Vec<Vec<F3_i<N>>> {
     let mut resultant_terms = Vec::new();
     for t in terms {
@@ -320,6 +321,10 @@ impl Term {
     }
     transpose(resultant_terms)
   }
+
+fn is_similar(&self, term: Term) -> bool {
+  self.x_deg == term.x_deg && self.y_deg == term.y_deg && self.z_deg == term.z_deg
+}
 }
 
 fn transpose<T>(v: Vec<Vec<T>>) -> Vec<Vec<T>> {

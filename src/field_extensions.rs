@@ -91,7 +91,7 @@ impl<const N: u8> F2_i<N> {
 
   
   fn internal_mul(lhs: u64, rhs: u64) -> u16 {
-    const IRRED_PART: [u64; 11] = [0, 1, 0b11,0b11,0b11, 0b101, 0b11, 0b11, 0b11011, 0b11, 0b1001];
+    const IRRED_PART: [u64; 13] = [0, 1, 0b11,0b11,0b11, 0b101, 0b11, 0b11, 0b11011, 0b11, 0b1001, 0b101, 0b1001];
     let bitmask: u64 = !((!0) << N);
     let value = IRRED_PART[N as usize];
 
@@ -233,9 +233,7 @@ impl<const N: u8> F3_i<N> {
     }
     result
   }
-
-  // We first convert the polynomials to vectors with coefficients in Z/3Z
-  // Then we multiply them and reduce the result
+  
   fn internal_mul(a: u64, b: u64) -> u16 {
     const IRRED_POLY: [u64; 7] = [0b0000, 0b0001, 0b0010, 0b0110,0b1001, 0b0110, 0b1001];
 

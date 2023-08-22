@@ -2,7 +2,7 @@ use std::{time::Instant, sync::{mpsc, Arc, Mutex}, thread, fs};
 
 use algebraic_types::{IsoPolynomial, Lookup, PolynomialResult};
 
-use crate::{polynomials::Polynomial, field_extensions::{F3_i, FieldTraits}};
+use crate::polynomials::Polynomial;
 
 
 
@@ -25,13 +25,17 @@ const FIELD_EXT_LUT: [usize; 7] = [1,1,2,3,4,6,10];
 const MAX_FIELD_EXT: usize = FIELD_EXT_LUT[DEGREE];
 
 
+#[allow(dead_code)]
 const COEFF_BIT_SIZES: [usize; 5] = [1,1,1,2,2];
+#[allow(dead_code)]
 const COEFF_BIT_SIZE: usize = COEFF_BIT_SIZES[FIELD_ORDER];
 
 const PGL3_SIZES: [f64; 4] = [0., 1., 168., 5616.];
 const PGL3_SIZE: f64 = PGL3_SIZES[FIELD_ORDER];
 
+
 // Q^21 - 1 / 2
+#[allow(dead_code)]
 const POLYNOMIALS: usize = (FIELD_ORDER.pow(21) - 1) / 2;
 const DPLUS2_CHOOSE_2: usize = ((DEGREE+2) * (DEGREE+1)) / 2;
 
@@ -47,6 +51,7 @@ type SuperType = (Lookup<1>,Lookup<2>,Lookup<3>,
                    Lookup<4>,
                   Lookup<5>,Lookup<6>,
                   // Lookup<7>,Lookup<8>, Lookup<9>,Lookup<10>,
+                  // Lookup<11>, Lookup<12>
                   );
 
 #[derive(Debug,Clone,Copy,PartialEq)]
@@ -65,7 +70,7 @@ fn main() {
   let (part_x, part_y, part_z) = Polynomial::generate_derative_luts(&normal);
   
   println!("Importing file");
-
+  
   let mut path = format!("input/{}-{}.txt", DEGREE, FIELD_ORDER);
 
   match fs::metadata(&path) {
@@ -113,13 +118,14 @@ fn main() {
     } 
     iso_polys
   };
-
+  
+  println!("amount of non-iso polynomials: {}", &iso_polys.iter().fold(0, |acc, iso| acc + iso.size));
+  
   let import_time = Instant::now();
   println!("Generating took: {:?}", (import_time-start_time));
   println!();  
 
   // return;
-
 
   // Generating Lookup Tables
   // CHANGE THIS: 
@@ -134,38 +140,11 @@ fn main() {
                                   // Lookup::<8>::create(&normal, &part_x, &part_y, &part_z),
                                   // Lookup::<9>::create(&normal, &part_x, &part_y, &part_z),
                                   // Lookup::<10>::create(&normal, &part_x, &part_y, &part_z),
-                                );
+                                                                  );
 
   let lookup_time = Instant::now();
   println!("Generating took: {:?}", (lookup_time-start_time));
-  println!();  
-  
-  // for n in normal.iter().enumerate() {
-  //   println!("{:?}", n);
-
-  // }
-
-  // let poly = Polynomial::new(0b01_00_10_10_00_01_10_00_01_01);
-
-  // println!("{}", poly.str(&normal));
-
-  // // CHANGE THIS: 
-  // let result = poly.has_singularity(&super_lookup.0);
-  // if result == None {println!("1")}
-
-  // let result = poly.has_singularity(&super_lookup.1);
-  // if result == None {println!("2")}
-
-  // let result = poly.has_singularity(&super_lookup.2);
-  // if result == None {println!("3")}
-
-  // let mut count = 0;
-  // let c = poly.has_singularity_point(120, &super_lookup.2, &mut count);
-
-  // // for (index, (x,y,z)) in F3_i::<3>::iterate_over_points().enumerate() {
-  // //   println!("{index}: {:?}, {:?}, {:?}", x, y, z);
-  // // }
-
+  println!();
 
   //
   // Chunk generation so threads get fed evenly
@@ -240,7 +219,7 @@ fn main() {
 
   let a: Vec<String> = results.iter().map(|t| t.to_string(&normal)).collect();
   let b = a.join("\n");
-  let c = "# Smooth polynomial representant (CONSTANT_(xpower)(ypower)(zpower)) | isomoprhism class | points defined over k_i\n".to_owned() + &b;
+  let c = "# Smooth polynomial representative (CONSTANT_(xpower)(ypower)(zpower)) | isomoprhism class | points defined over k_i\n".to_owned() + &b;
   fs::write(FILE_NAME, c).expect("Unable to write file");
   
 
@@ -297,7 +276,7 @@ fn is_smooth(iso_polys: &Vec<IsoPolynomial>, start: usize, end: usize, super_lut
     // points_on_curve[3] += result.unwrap();
 
     // let result = poly.has_singularity(&super_lut.4);
-    // if result == None {continue}
+    // if result == None {continue;}
     // count[4] += size as usize;
     // points_on_curve[4] += result.unwrap();
 
@@ -325,6 +304,16 @@ fn is_smooth(iso_polys: &Vec<IsoPolynomial>, start: usize, end: usize, super_lut
     // if result == None {continue;}
     // count[9] += size as usize;
     // points_on_curve[9] += result.unwrap();
+
+    // let result = poly.has_singularity(&super_lut.10);
+    // if result == None {println!("FOUND ONE IN 11!!"); continue;}
+    // count[10] += size as usize;
+    // points_on_curve[10] += result.unwrap();
+
+    // let result = poly.has_singularity(&super_lut.11);
+    // if result == None {continue;}
+    // count[11] += size as usize;
+    // points_on_curve[11] += result.unwrap();
 
 
     results.push(PolynomialResult::new(*iso_poly, points_on_curve))
