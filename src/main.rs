@@ -2,7 +2,7 @@ use std::{time::Instant, sync::{mpsc, Arc, Mutex}, thread, fs};
 
 use algebraic_types::{IsoPolynomial, Lookup, PolynomialResult};
 
-use crate::{polynomials::Polynomial, field_extensions::{F3_i, FieldTraits}};
+use crate::polynomials::Polynomial;
 
 
 
@@ -25,13 +25,17 @@ const FIELD_EXT_LUT: [usize; 7] = [1,1,2,3,4,6,10];
 const MAX_FIELD_EXT: usize = FIELD_EXT_LUT[DEGREE];
 
 
+#[allow(dead_code)]
 const COEFF_BIT_SIZES: [usize; 5] = [1,1,1,2,2];
+#[allow(dead_code)]
 const COEFF_BIT_SIZE: usize = COEFF_BIT_SIZES[FIELD_ORDER];
 
 const PGL3_SIZES: [f64; 4] = [0., 1., 168., 5616.];
 const PGL3_SIZE: f64 = PGL3_SIZES[FIELD_ORDER];
 
+
 // Q^21 - 1 / 2
+#[allow(dead_code)]
 const POLYNOMIALS: usize = (FIELD_ORDER.pow(21) - 1) / 2;
 const DPLUS2_CHOOSE_2: usize = ((DEGREE+2) * (DEGREE+1)) / 2;
 
@@ -143,7 +147,7 @@ fn main() {
 
   let lookup_time = Instant::now();
   println!("Generating took: {:?}", (lookup_time-start_time));
-  println!();  
+  println!();
 
   //
   // Chunk generation so threads get fed evenly

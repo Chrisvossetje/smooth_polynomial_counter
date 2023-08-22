@@ -226,6 +226,26 @@ pub struct Term {
   pub constant: u8,
 }
 
+pub fn multiply_bits_by_constant(bits: u64, constant: u64) -> u64 {
+  match constant % FIELD_ORDER as u64 {
+    0 => 0,
+    1 => bits,
+    _ => {
+      match FIELD_ORDER {
+        2 => bits,
+        3 =>  {
+          const M1: u64 = 0x5555555555555555; 
+          const M2: u64 = 0xAAAAAAAAAAAAAAAA;
+          let a1 = (bits & M2) >> 1;
+          let a2 = (bits & M1) << 1;
+          a1 | a2
+        },
+        _ => panic!("Field size not supported"),
+      }
+    }
+  }
+}
+
 
 impl Term {
   pub fn zero() -> Term {
@@ -245,7 +265,8 @@ impl Term {
     if self.constant == 0 {
       F3_i::ZERO
     } else {
-      x.mul_ntimes(self.x_deg) * y.mul_ntimes(self.y_deg) * z.mul_ntimes(self.z_deg)
+      x.mul_ntimes(self.x_deg) * y.mul_ntimes(self.y_deg) * z.mul_ntimes(self.z_deg) 
+      // * F3_i{ element: self.constant as u16 }
     }
   }
 
@@ -258,21 +279,21 @@ impl Term {
     let mut term_y = self;
     let mut term_z = self;
 
-    if term_x.x_deg == 0 {
+    if term_x.x_deg % FIELD_ORDER as u8 == 0 {
       term_x = Term::zero();
     } else {
       term_x.constant = (term_x.constant * term_x.x_deg) % FIELD_ORDER as u8;
       term_x.x_deg -= 1;
     }
 
-    if term_y.y_deg == 0 {
+    if term_y.y_deg % FIELD_ORDER as u8 == 0 {
       term_y = Term::zero();
     } else {
       term_y.constant = (term_y.constant * term_y.y_deg) % FIELD_ORDER as u8;
       term_y.y_deg -= 1;
     }
     
-    if term_z.z_deg == 0 {
+    if term_z.z_deg % FIELD_ORDER as u8 == 0 {
       term_z = Term::zero();
     } else {
       term_z.constant = (term_z.constant * term_z.z_deg) % FIELD_ORDER as u8;
@@ -285,7 +306,8 @@ impl Term {
   pub fn generate_precalculated_points<const N: u8>(self) -> Vec<F2_i<N>> {
     let mut results = Vec::new();
     for (x,y,z) in F2_i::iterate_over_points() {
-      let result = self.evaluate_f2(x, y, z);
+      let mut result = self.evaluate_f2(x, y, z);
+      result.element = multiply_bits_by_constant(result.element as u64, self.constant as u64) as u16;
       results.push(result);
     }
     results

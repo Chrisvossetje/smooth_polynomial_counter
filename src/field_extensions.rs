@@ -51,7 +51,7 @@ impl<T: FieldTraits> ProjectivePointIterator<T> {
 #[allow(non_camel_case_types)]
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct F2_i<const N: u8> {
-  element: u16,
+  pub element: u16,
 }
 impl<const N: u8> FieldTraits for F2_i<N> {
   const ZERO: Self = F2_i { element: 0};
