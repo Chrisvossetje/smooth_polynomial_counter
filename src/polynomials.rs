@@ -95,11 +95,11 @@ impl Polynomial {
 
   // FIELD_ORDER_PROBLEM
   pub fn has_singularity_point<const N: u8>(self, index: usize,lookup: &Lookup<N>, count: &mut usize) -> Singularity {
-    if self.evaluate_f3(index, &lookup.normal) == F3_i::ZERO {
+    if self.evaluate_f2(index, &lookup.normal) == F2_i::ZERO {
       *count += 1;
-      if self.evaluate_f3(index, &lookup.part_x) == F3_i::ZERO {
-        if self.evaluate_f3(index, &lookup.part_y) == F3_i::ZERO {
-          if self.evaluate_f3(index, &lookup.part_z) == F3_i::ZERO {
+      if self.evaluate_f2(index, &lookup.part_x) == F2_i::ZERO {
+        if self.evaluate_f2(index, &lookup.part_y) == F2_i::ZERO {
+          if self.evaluate_f2(index, &lookup.part_z) == F2_i::ZERO {
             return Singularity::Singular
           }
         }
@@ -112,7 +112,7 @@ impl Polynomial {
     let mut points_on_curve = 0;
 
   // FIELD_ORDER_PROBLEM
-    for (index, _) in F3_i::<N>::iterate_over_points().enumerate() {
+    for (index, _) in F2_i::<N>::iterate_over_points().enumerate() {
       if self.has_singularity_point(index,lookup, &mut points_on_curve) == Singularity::Singular {
         return None
       }
@@ -282,17 +282,17 @@ impl Term {
   }
 
   // FIELD_ORDER_PROBLEM
-  pub fn generate_precalculated_points<const N: u8>(self) -> Vec<F3_i<N>> {
+  pub fn generate_precalculated_points<const N: u8>(self) -> Vec<F2_i<N>> {
     let mut results = Vec::new();
-    for (x,y,z) in F3_i::iterate_over_points() {
-      let result = self.evaluate_f3(x, y, z);
+    for (x,y,z) in F2_i::iterate_over_points() {
+      let result = self.evaluate_f2(x, y, z);
       results.push(result);
     }
     results
   }
 
   // FIELD_ORDER_PROBLEM
-  pub fn generate_points_for_multiple<const N: u8>(terms: &Vec<Term>) -> Vec<Vec<F3_i<N>>> {
+  pub fn generate_points_for_multiple<const N: u8>(terms: &Vec<Term>) -> Vec<Vec<F2_i<N>>> {
     let mut resultant_terms = Vec::new();
     for t in terms {
       resultant_terms.push(t.generate_precalculated_points());

@@ -22,10 +22,10 @@ impl PolynomialResult {
 
 // FIELD_ORDER_PROBLEM
 pub struct Lookup <const N: u8> {
-  pub normal: Vec<Vec<F3_i<N>>>,
-  pub part_x: Vec<Vec<F3_i<N>>>,
-  pub part_y: Vec<Vec<F3_i<N>>>,
-  pub part_z: Vec<Vec<F3_i<N>>>,
+  pub normal: Vec<Vec<F2_i<N>>>,
+  pub part_x: Vec<Vec<F2_i<N>>>,
+  pub part_y: Vec<Vec<F2_i<N>>>,
+  pub part_z: Vec<Vec<F2_i<N>>>,
 } 
 
 impl<const N: u8> Lookup<N> {

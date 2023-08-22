@@ -17,8 +17,8 @@ mod polynomials;
 #[allow(non_camel_case_types)]
 mod field_extensions;
 
-const DEGREE: usize = 3;
-const FIELD_ORDER: usize = 3;
+const DEGREE: usize = 6;
+const FIELD_ORDER: usize = 2;
 
 
 const FIELD_EXT_LUT: [usize; 7] = [1,1,2,3,4,6,10];
@@ -44,9 +44,9 @@ const FILE_NAME: &str = "./output.txt";
 
 // CHANGE THIS:
 type SuperType = (Lookup<1>,Lookup<2>,Lookup<3>,
-                  //  Lookup<4>,
-                  // Lookup<5>,Lookup<6>,
-                  // Lookup<7>,Lookup<8>, Lookup<9>,Lookup<10>,
+                   Lookup<4>,
+                  Lookup<5>,Lookup<6>,
+                  Lookup<7>,Lookup<8>, Lookup<9>,Lookup<10>,
                   // Lookup<11>, Lookup<12>
                   );
 
@@ -130,15 +130,15 @@ fn main() {
                                   Lookup::<2>::create(&normal, &part_x, &part_y, &part_z),
                                   Lookup::<3>::create(&normal, &part_x, &part_y, &part_z),
 
-                                  // Lookup::<4>::create(&normal, &part_x, &part_y, &part_z),
+                                  Lookup::<4>::create(&normal, &part_x, &part_y, &part_z),
 
-                                  // Lookup::<5>::create(&normal, &part_x, &part_y, &part_z),
-                                  // Lookup::<6>::create(&normal, &part_x, &part_y, &part_z),
+                                  Lookup::<5>::create(&normal, &part_x, &part_y, &part_z),
+                                  Lookup::<6>::create(&normal, &part_x, &part_y, &part_z),
 
-                                  // Lookup::<7>::create(&normal, &part_x, &part_y, &part_z),
-                                  // Lookup::<8>::create(&normal, &part_x, &part_y, &part_z),
-                                  // Lookup::<9>::create(&normal, &part_x, &part_y, &part_z),
-                                  // Lookup::<10>::create(&normal, &part_x, &part_y, &part_z),
+                                  Lookup::<7>::create(&normal, &part_x, &part_y, &part_z),
+                                  Lookup::<8>::create(&normal, &part_x, &part_y, &part_z),
+                                  Lookup::<9>::create(&normal, &part_x, &part_y, &part_z),
+                                  Lookup::<10>::create(&normal, &part_x, &part_y, &part_z),
                                                                   );
 
   let lookup_time = Instant::now();
@@ -269,40 +269,40 @@ fn is_smooth(iso_polys: &Vec<IsoPolynomial>, start: usize, end: usize, super_lut
     count[2] += size as usize;
     points_on_curve[2] += result.unwrap();
 
-    // let result = poly.has_singularity(&super_lut.3);
-    // if result == None {continue;}
-    // count[3] += size as usize;
-    // points_on_curve[3] += result.unwrap();
+    let result = poly.has_singularity(&super_lut.3);
+    if result == None {continue;}
+    count[3] += size as usize;
+    points_on_curve[3] += result.unwrap();
 
-    // let result = poly.has_singularity(&super_lut.4);
-    // if result == None {continue;}
-    // count[4] += size as usize;
-    // points_on_curve[4] += result.unwrap();
+    let result = poly.has_singularity(&super_lut.4);
+    if result == None {continue;}
+    count[4] += size as usize;
+    points_on_curve[4] += result.unwrap();
 
-    // let result = poly.has_singularity(&super_lut.5);
-    // if result == None {continue;}
-    // count[5] += size as usize;
-    // points_on_curve[5] += result.unwrap();
+    let result = poly.has_singularity(&super_lut.5);
+    if result == None {continue;}
+    count[5] += size as usize;
+    points_on_curve[5] += result.unwrap();
 
-    // let result = poly.has_singularity(&super_lut.6);
-    // if result == None {continue;}
-    // count[6] += size as usize;
-    // points_on_curve[6] += result.unwrap();
+    let result = poly.has_singularity(&super_lut.6);
+    if result == None {continue;}
+    count[6] += size as usize;
+    points_on_curve[6] += result.unwrap();
 
-    // let result = poly.has_singularity(&super_lut.7);
-    // if result == None {continue;}
-    // count[7] += size as usize;
-    // points_on_curve[7] += result.unwrap();
+    let result = poly.has_singularity(&super_lut.7);
+    if result == None {continue;}
+    count[7] += size as usize;
+    points_on_curve[7] += result.unwrap();
 
-    // let result = poly.has_singularity(&super_lut.8);
-    // if result == None {continue;}
-    // count[8] += size as usize;
-    // points_on_curve[8] += result.unwrap();
+    let result = poly.has_singularity(&super_lut.8);
+    if result == None {continue;}
+    count[8] += size as usize;
+    points_on_curve[8] += result.unwrap();
 
-    // let result = poly.has_singularity(&super_lut.9);
-    // if result == None {continue;}
-    // count[9] += size as usize;
-    // points_on_curve[9] += result.unwrap();
+    let result = poly.has_singularity(&super_lut.9);
+    if result == None {continue;}
+    count[9] += size as usize;
+    points_on_curve[9] += result.unwrap();
 
     // let result = poly.has_singularity(&super_lut.10);
     // if result == None {println!("FOUND ONE IN 11!!"); continue;}
