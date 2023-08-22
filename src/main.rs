@@ -44,8 +44,8 @@ const FILE_NAME: &str = "./output.txt";
 
 // CHANGE THIS:
 type SuperType = (Lookup<1>,Lookup<2>,Lookup<3>,
-                  //  Lookup<4>,
-                  // Lookup<5>,Lookup<6>,
+                   Lookup<4>,
+                  Lookup<5>,Lookup<6>,
                   // Lookup<7>,Lookup<8>, Lookup<9>,Lookup<10>,
                   );
 
@@ -127,9 +127,9 @@ fn main() {
   let super_lookup: SuperType = ( Lookup::<1>::create(&normal, &part_x, &part_y, &part_z),
                                   Lookup::<2>::create(&normal, &part_x, &part_y, &part_z),
                                   Lookup::<3>::create(&normal, &part_x, &part_y, &part_z),
-                                  // Lookup::<4>::create(&normal, &part_x, &part_y, &part_z),
-                                  // Lookup::<5>::create(&normal, &part_x, &part_y, &part_z),
-                                  // Lookup::<6>::create(&normal, &part_x, &part_y, &part_z),
+                                  Lookup::<4>::create(&normal, &part_x, &part_y, &part_z),
+                                  Lookup::<5>::create(&normal, &part_x, &part_y, &part_z),
+                                  Lookup::<6>::create(&normal, &part_x, &part_y, &part_z),
                                   // Lookup::<7>::create(&normal, &part_x, &part_y, &part_z),
                                   // Lookup::<8>::create(&normal, &part_x, &part_y, &part_z),
                                   // Lookup::<9>::create(&normal, &part_x, &part_y, &part_z),
@@ -140,13 +140,32 @@ fn main() {
   println!("Generating took: {:?}", (lookup_time-start_time));
   println!();  
   
-  let a = F3_i::<3>::new(0b011000);
-  let b = F3_i::<3>::new(0b100010);
-  println!("{:?}", a*b);  
+  // for n in normal.iter().enumerate() {
+  //   println!("{:?}", n);
 
-  for (index, (x,y,z)) in F3_i::<2>::iterate_over_points().enumerate() {
-    println!("{index},{:?},{:?},{:?}", x,y,z);
-  }
+  // }
+
+  // let poly = Polynomial::new(0b01_00_10_10_00_01_10_00_01_01);
+
+  // println!("{}", poly.str(&normal));
+
+  // // CHANGE THIS: 
+  // let result = poly.has_singularity(&super_lookup.0);
+  // if result == None {println!("1")}
+
+  // let result = poly.has_singularity(&super_lookup.1);
+  // if result == None {println!("2")}
+
+  // let result = poly.has_singularity(&super_lookup.2);
+  // if result == None {println!("3")}
+
+  // let mut count = 0;
+  // let c = poly.has_singularity_point(120, &super_lookup.2, &mut count);
+
+  // // for (index, (x,y,z)) in F3_i::<3>::iterate_over_points().enumerate() {
+  // //   println!("{index}: {:?}, {:?}, {:?}", x, y, z);
+  // // }
+
 
   //
   // Chunk generation so threads get fed evenly
@@ -278,7 +297,7 @@ fn is_smooth(iso_polys: &Vec<IsoPolynomial>, start: usize, end: usize, super_lut
     // points_on_curve[3] += result.unwrap();
 
     // let result = poly.has_singularity(&super_lut.4);
-    // if result == None {panic!()}
+    // if result == None {continue}
     // count[4] += size as usize;
     // points_on_curve[4] += result.unwrap();
 
