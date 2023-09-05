@@ -111,33 +111,12 @@ impl Polynomial {
   pub fn has_singularity<const N: u8>(self, lookup: &Lookup<N>) -> Option<usize> {
     let mut points_on_curve = 0;
 
-  // FIELD_ORDER_PROBLEM
+    // FIELD_ORDER_PROBLEM
     for (index, _) in F3_i::<N>::iterate_over_points().enumerate() {
       if self.has_singularity_point(index,lookup, &mut points_on_curve) == Singularity::Singular {
         return None
       }
     }
-
-    // // (1,0,0)
-    
-    // // (x,1,0) 
-    // for x in 0..(1<<N) {
-    //   let y = 1;
-    //   let z = 0;
-    //   if self.has_singularity_point(x,y,z,lookup, &mut points_on_curve) == Singularity::Singular {
-    //     return None
-    //   }
-    // }
-    
-    // // (x,y,1)
-    // for x in 0..(1<<N) {
-    //   for y in 0..(1<<N) {
-    //     let z = 1;
-    //     if self.has_singularity_point(x,y,z,lookup, &mut points_on_curve) == Singularity::Singular {
-    //       return None
-    //     }
-    //   }
-    // }
     Some(points_on_curve)
   }
 

@@ -1,6 +1,14 @@
 use std::{ops::{Add, Mul, AddAssign, MulAssign}, num::Wrapping};
 
 
+//
+//
+// Implementation of field extensions for field 2 and 3 up to a certain degree
+// Most notably, internal add and internal mul are interesting functions
+//
+//
+
+
 
 pub trait FieldTraits: Sized + MulAssign + Copy {
   
@@ -198,24 +206,6 @@ impl<const N: u8> F3_i<N> {
     }
     println!(" ({})", N);
   }
-
-  // pub fn internal_add(a: u64, b: u64) -> u64 {
-  //   const M1: u64 = 0x5555555555555555;
-  //   const M2: u64 = 0xAAAAAAAAAAAAAAAA;
-
-  //   let xor = a^b;
-  //   let and = a&b;
-
-  //   let one = (and & M1) << 1;
-  //   let two = (and & M2) >> 1;
-
-  //   let ab = ((a&M2) >> 1) & b;
-  //   let ba = ((b&M2) >> 1) & a;
-
-  //   let mul = (ab | ba) * 0b11;
-
-  //   (mul ^ xor) | one | two
-  // }
 
   fn internal_add_fast(a: u64,b: u64) -> u64 {
     const M2: u64 = 0xAAAAAAAAAAAAAAAA; 

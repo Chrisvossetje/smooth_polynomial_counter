@@ -4,6 +4,13 @@ use crate::field_extensions::{F2_i, F3_i};
 use crate::polynomials::{Term, Polynomial};
 
 
+// 
+// 
+// Just Some simple helper types, no smart stuff here
+// 
+// 
+
+
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct PolynomialResult {
   pub poly: IsoPolynomial,
