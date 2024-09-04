@@ -4,7 +4,8 @@ use std::{ops::{Add, Mul, AddAssign, MulAssign}, num::Wrapping};
 //
 //
 // Implementation of field extensions for field 2 and 3 up to a certain degree
-// Most notably, internal add and internal mul are interesting functions
+// Most notably, internal add and internal mul are interesting functions (Multiplying and adding field extended fields)
+// Lots of functions are just boilerplate functions to make it easier to use in other parts of the pogram
 //
 //
 
@@ -103,8 +104,8 @@ impl<const N: u8> F2_i<N> {
     // Handbook of finite fields (Page 33, Table 2.2.1)
     // http://archive.ymsc.tsinghua.edu.cn/pacm_download/672/12637-dingjt-p2.pdf
     // 2,1 | 3,1 | 4,1 | 5,2 | 6,1 | 7,1 | 8,4,3,1 | 9,1
-    // 10,3 | 11,2 | 12,3 | 13,4,3,1 | 14,5 | 15,1 | 16,5,3,1 | 17,3
-    const IRRED_PART: [u64; 11] = [0, 1, 0b11,0b11,0b11, 0b101, 0b11, 0b11, 0b11011, 0b11, 0b1001];
+    // 10,3 | 11,2 | 12,3 | 13,4,3,1 | 14,5 | 15,1 | 16,5,3,1 | 17,3 | 18,3
+    const IRRED_PART: [u64; 19] = [0, 1, 0b11,0b11,0b11, 0b101, 0b11, 0b11, 0b11011, 0b11, 0b1001, 0b101, 0b1001, 0b11011, 0b100001, 0b11, 0b101011, 0b1001, 0b1001];
     let bitmask: u64 = !((!0) << N);
     let value = IRRED_PART[N as usize];
 

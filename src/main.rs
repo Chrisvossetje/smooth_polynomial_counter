@@ -65,10 +65,12 @@ struct CustomChunk {
 fn main() {
   let start_time = Instant::now();
 
+  
   println!("Generate terms");
   let normal = Polynomial::generate_default_lut();
   let (part_x, part_y, part_z) = Polynomial::generate_derative_luts(&normal);
   
+  let lol = Lookup::<14>::create(&normal, &part_x, &part_y, &part_z);
   println!("Importing file");
   
   let mut path = format!("input/{}-{}.txt", DEGREE, FIELD_ORDER);
